@@ -7,8 +7,8 @@ from base.utils.dp import get_page_by_adspwer_id
 from base.metamask import Metamask
 from matr1x.datas import load_data_list
 from matr1x.index import Matr1x
-from utils.time_utils import is_same_day, get_current_date
-from matr1x.datas import update_point, update_registed
+from utils.hhtime import get_current_date
+from matr1x.datas import update_registed, find_data_by_index
 
 
 # 如果是多个命令，这里需要用group
@@ -84,8 +84,12 @@ def _get_page(index, need_login=False):
 @cli.command()
 @click.option("-i", "--index", type=int, prompt="请输入浏览器序号", help="浏览器序号")
 def claim(index):
-    page = _get_page(index, True)
-    # _claim(page, index)
+
+    data = find_data_by_index(index)
+    pk = data.get("pk")
+
+    matr1x = Matr1x(pk)
+    matr1x.claim_key(4, False)
 
 
 def _register(data):
@@ -102,8 +106,8 @@ def _register(data):
 
     matr1x = Matr1x(pk)
     matr1x.register(page, url)
+    matr1x.connect_twitter(page)
 
-    # FIXME: 写入excel
     update_registed(matr1x.eth_address)
 
 
@@ -123,6 +127,10 @@ def _wait_key(page):
 def _run_item(data):
     index = data.get("index")
     pk = data.get("pk")
+    if not pk:
+        logger.warning(f"{index} 获取pk为空, 跳过...")
+        return False
+
     matr1x = Matr1x(pk)
 
     # ads_id 为空跳过
@@ -163,24 +171,30 @@ def _run_item(data):
 
     try:
         # 完成任务，claim
-        matr1x.task(page, index)
-        matr1x.claim(page, index)
+        for _ in range(3):
+            matr1x.task(page, index)
+            matr1x.claim(page, index)
+            if matr1x.task_count == 0:
+                break
     except Exception as e:
         logger.error(e)
 
     page.close()
 
 
-# @cli.command("r")
+@cli.command("r")
 def random_run():
 
     datas = load_data_list()
     while datas:
         data = random.choice(datas)
-        result = _run_item(data)
-        if not result:
-            datas.remove(data)
-            continue
+        try:
+            result = _run_item(data)
+            if not result:
+                datas.remove(data)
+                continue
+        except Exception as e:
+            logger.error(e)
 
         datas.remove(data)
         time.sleep(random.randint(1, 3))
@@ -189,8 +203,4 @@ def random_run():
 
 
 if __name__ == "__main__":
-    # cli()
-    random_run()
-
-    # data = find_data_by_index(2)
-    # logger.info(data)
+    cli()

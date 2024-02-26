@@ -36,9 +36,9 @@ def find_wallet_by_index(index):
         # mnemo = aes_decrypt(wallet.get("w"), key)
         # wallet["w"] = mnemo
 
-        # 解密数据
-        pk = aes_decrypt(wallet.get("pk"), key)
-        wallet["pk"] = pk
+        # # 解密数据
+        # pk = aes_decrypt(wallet.get("pk"), key)
+        # wallet["pk"] = pk
 
         return wallet
 

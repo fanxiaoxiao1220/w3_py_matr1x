@@ -4,7 +4,7 @@ from eth_account import Account
 from retry import retry
 from loguru import logger
 from config.abi_config import nft_abi
-from utils.time_utils import is_same_day
+from utils.hhtime import is_same_day
 from utils.polygon import Polygon
 from base.metamask import Metamask
 from matr1x.datas import update_point, update_registed
@@ -22,8 +22,9 @@ class Matr1x:
         self.pk = pk
         self.eth_address = account.address
         self.connect_x = False
+        self.task_count = 0  # 验证任务数
 
-    def claim_key(self):
+    def claim_key(self, count=3, is_check=True):
         balance = self.get_balance()
         eth_address = self.eth_address
         if balance == 0:
@@ -34,13 +35,13 @@ class Matr1x:
 
         # 检查今日是否已经claim
         is_claimed = self.check_claimed()
-        if is_claimed:
+        if is_claimed and is_check:
             logger.warning(
                 f"[{eth_address}] 今日已经claim超过3次, 无需重复执行, 本次跳过"
             )
             return False
 
-        for _ in range(3):
+        for _ in range(count):
             self._claim_key_with_contract()
             time.sleep(random.randint(2, 5))
 
@@ -70,6 +71,37 @@ class Matr1x:
         eles = tab.eles("x://div[@class='value']")
         point = eles[2].text
         return point.strip()
+
+    # 链接twitter
+    def _auth_x(self, page):
+        page.listen.start("https://api.matr1x.io/matr1x-points/task/authTwitter")
+        last_tab = page.get_tab(0)
+
+        page.wait.ele_loaded("@data-testid=OAuth_Consent_Button")
+        last_tab.ele("@data-testid=OAuth_Consent_Button").click()
+
+        for packet in page.listen.steps():
+            response = packet.response
+            logger.info(response.raw_body)
+
+            # msg = response.raw_body.get("msg")
+            # if msg == "get user twitter info failure":
+            #     break
+
+            self.connect_x = True
+
+        time.sleep(3)
+        return self.connect_x
+
+    # FIXME: 待完成
+    def connect_twitter(self, page):
+        last_tab = page.get_tab(0)
+        eles = last_tab.eles(
+            "x://div[@class='pointsTaskListWarp']//button[@class='el-button btn el-button--default']"
+        )
+
+        ele = eles[1]
+        print(ele.text)
 
     # 获取钱包余额
     def get_balance(self):
@@ -201,24 +233,34 @@ class Matr1x:
         update_point(index=index, point=point1, last_point=point, key_count=key_count)
 
     # 完成任务
+    @retry(tries=10, delay=1)
     def task(self, page, index):
+        logger.info(f"{index} 准备开始执行任务...")
         last_tab = page.get_tab(0)
         last_tab.get("https://matr1x.io/max-event")
-
+        self.task_count = 0
         # 查找未完成的任务，然后去执行
         eles = last_tab.eles(
             "x://div[@class='pointsTaskListWarp']//button[@class='el-button btn el-button--default']"
         )
         for ele in eles:
-            title = ele.text
-            # 如果是go按钮，就跳过不执行
-            if "Go" in title:
+
+            _ele = ele.parent(2).ele(".taskContent").child(1)
+            title = _ele.text
+
+            if "Open Case" in title or "Refer Friends" in title:
                 continue
 
             ele.click()
             time.sleep(2)
+
+            ele = last_tab.ele(".downloadModel", timeout=3)
+            if not ele:
+                logger.warning("点击后弹窗未出现....")
+                continue
+
             ele = last_tab.ele(
-                "x://span[text()=' VERIFYING ']/parent::button", timeout=5
+                "x://span[text()=' VERIFYING ']/parent::button", timeout=3
             )
             if ele:
                 logger.warning("已经验证过, 正在等待任务...")
@@ -227,16 +269,24 @@ class Matr1x:
 
             # 判断是否需要链接twitter
             ele = last_tab.ele(
-                "x://span[text()=' Connect X ']/parent::button", timeout=5
+                "x://span[text()=' Connect X ']/parent::button", timeout=3
             )
             if ele and not self.connect_x:
                 ele.click()
-                page.wait.ele_loaded("@data-testid=OAuth_Consent_Button")
-                last_tab.ele("@data-testid=OAuth_Consent_Button").click()
-                time.sleep(5)
-                self.connect_x = True
-                self.task(page, index)
 
-            last_tab.ele("x://span[text()=' VERIFY ']/parent::button").click()
+                # 关联twitter
+                result = self._auth_x(page)
+                if result:
+                    self.task(page, index)
+
+            try:
+                last_tab.ele("x://span[text()=' VERIFY ']/parent::button").click()
+                self.task_count += 1
+                time.sleep(3)
+            except Exception as e:
+                logger.error(e)
+
+        if self.task_count > 0:
+            time.sleep(120)
 
         logger.success(f"{index}所有任务执行完成...")
