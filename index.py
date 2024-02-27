@@ -8,7 +8,7 @@ from base.metamask import Metamask
 from matr1x.datas import load_data_list
 from matr1x.index import Matr1x
 from utils.hhtime import get_current_date
-from matr1x.datas import update_registed, find_data_by_index
+from matr1x.datas import update_registed, find_data_by_index, update_claimed_date
 
 
 # 如果是多个命令，这里需要用group
@@ -59,7 +59,8 @@ def banlances():
     logger.info(list)
 
 
-def _get_page(index, need_login=False):
+def _get_page(index, ads_id, need_login=False):
+
     # 根据序号查找钱包信息
     wallet = find_wallet_by_index(index)
     if not wallet:
@@ -96,8 +97,9 @@ def _register(data):
     url = data.get("url")
     pk = data.get("pk")
     index = data.get("index")
+    ads_id = data.get("ads_id")
 
-    page = _get_page(index, True)
+    page = _get_page(index, ads_id, True)
     mm = Metamask(page)
     network = mm.get_current_network()
 
@@ -111,17 +113,11 @@ def _register(data):
     update_registed(matr1x.eth_address)
 
 
-def _wait_key(page):
-    last_tab = page.get_tab(0)
-    while True:
-        last_tab.get("https://matr1x.io/max-event")
-        open = last_tab.ele("x://span[text()='Open ']/parent::button")
-        disabled = open.attr("disabled")
-        if open and not disabled:
-            logger.info(f"出现钥匙, 退出...")
-            break
-
-        time.sleep(10)
+@cli.command("ri")
+@click.option("-i", "--index", type=int, prompt="请输入浏览器序号", help="浏览器序号")
+def run_item(index):
+    data = find_data_by_index(index)
+    _run_item(data)
 
 
 def _run_item(data):
@@ -164,20 +160,28 @@ def _run_item(data):
 
     # 通过合约进行claim
     result = matr1x.claim_key()
-    page = _get_page(index, True)
+    page = _get_page(index, ads_id, True)
     # 如果claim完成就循环等待钥匙出现
     if result:
-        _wait_key(page)
+        matr1x.wait_key_visible(page)
 
-    try:
-        # 完成任务，claim
-        for _ in range(3):
+    # 完成任务, 领取积分
+    for _ in range(3):
+        matr1x.claim(page, index)
+        try:
             matr1x.task(page, index)
-            matr1x.claim(page, index)
-            if matr1x.task_count == 0:
-                break
-    except Exception as e:
-        logger.error(e)
+        except Exception as e:
+            logger.error(e)
+
+    key_count = matr1x.get_key_count(page)
+    if key_count > 0:
+        result = matr1x.claim_key(key_count, False)
+        # 如果claim完成就循环等待钥匙出现
+        if result:
+            matr1x.wait_key_visible(page)
+        matr1x.claim(page, index)
+
+    update_claimed_date(index)
 
     page.close()
 
@@ -203,4 +207,6 @@ def random_run():
 
 
 if __name__ == "__main__":
-    cli()
+    # cli()
+    data = find_data_by_index(48)
+    _run_item(data)

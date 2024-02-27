@@ -14,6 +14,11 @@ contrac_address = "0x0f3284bFEbc5f55B849c8CF792D39cC0f729e0BC"
 chainId = 137
 
 
+class ConnectXException(Exception):
+    def __init__(self, message="twitter授权异常"):
+        super().__init__(message)
+
+
 class Matr1x:
     def __init__(self, pk) -> None:
         self.w3 = Web3(HTTPProvider(rpc))
@@ -23,29 +28,6 @@ class Matr1x:
         self.eth_address = account.address
         self.connect_x = False
         self.task_count = 0  # 验证任务数
-
-    def claim_key(self, count=3, is_check=True):
-        balance = self.get_balance()
-        eth_address = self.eth_address
-        if balance == 0:
-            logger.warning(f"{self.eth_address} 余额为0, 请检查...")
-            return False
-
-        logger.info(f"[{eth_address}] 余额为 {balance} matic")
-
-        # 检查今日是否已经claim
-        is_claimed = self.check_claimed()
-        if is_claimed and is_check:
-            logger.warning(
-                f"[{eth_address}] 今日已经claim超过3次, 无需重复执行, 本次跳过"
-            )
-            return False
-
-        for _ in range(count):
-            self._claim_key_with_contract()
-            time.sleep(random.randint(2, 5))
-
-        return True
 
     @retry(tries=3, delay=1)
     def _claim_key_with_contract(self):
@@ -69,8 +51,12 @@ class Matr1x:
 
     def _get_point(self, tab):
         eles = tab.eles("x://div[@class='value']")
-        point = eles[2].text
-        return point.strip()
+        if len(eles) >= 3:
+            point = eles[2].text.strip()
+        else:
+            logger.warning("获取point异常")
+            point = "-1"
+        return point
 
     # 链接twitter
     def _auth_x(self, page):
@@ -82,36 +68,61 @@ class Matr1x:
 
         for packet in page.listen.steps():
             response = packet.response
-            logger.info(response.raw_body)
-
-            # msg = response.raw_body.get("msg")
-            # if msg == "get user twitter info failure":
-            #     break
-
-            self.connect_x = True
+            code = response.raw_body.get("code")
+            if code != 0:
+                logger.warning(response)
+                self.connect_x = False
+            else:
+                logger.success("x 授权成功")
+                self.connect_x = True
+            break
 
         time.sleep(3)
         return self.connect_x
 
-    # FIXME: 待完成
-    def connect_twitter(self, page):
-        last_tab = page.get_tab(0)
-        eles = last_tab.eles(
-            "x://div[@class='pointsTaskListWarp']//button[@class='el-button btn el-button--default']"
-        )
+    def _open_key(self, last_tab, index):
+        # 打开盒子
+        while True:
+            open = last_tab.ele("x://span[text()='Open ']/parent::button")
+            disabled = open.attr("disabled")
+            if not open or disabled == "disabled":
+                logger.success(f"[{index}] claim 结束...")
+                break
+            open.click()
 
-        ele = eles[1]
-        print(ele.text)
+            # 关闭弹窗
+            time.sleep(0.5)
+            ele = last_tab.ele("x://span[text()=' ok ']/parent::button")
+            if ele:
+                ele.click()
 
-    # 获取钱包余额
-    def get_balance(self):
-        _balance = self.w3.eth.get_balance(self.eth_address)
-        balance = self.w3.from_wei(_balance, "ether")
-        return balance
+            time.sleep(random.randint(1, 3))
+
+    # 链接钱包
+    def _connect_wallet(self, last_tab):
+        # 判断是否已链接钱包
+        ele = last_tab.ele("x://span[text()=' Connect Wallet ']", timeout=3)
+        if ele:
+            ele.click()
+            # 点击metamask按钮
+            last_tab.ele("x://div[text()=' MetaMask ']").click()
+
+    # claim 其他
+    def _claim_task(self, last_tab):
+        eles = last_tab.eles("x://span[text()=' CLAIM ']/parent::button")
+        for ele in eles:
+            ele.click()
+            time.sleep(1)
+            # 关闭弹窗
+            try:
+                last_tab.ele("x://span[text()=' ok ']/parent::button").click()
+            except Exception as e:
+                logger.error(e)
+            time.sleep(1)
 
     # 检测当前是否有claim key
     # 目前检测3次，如果要操作超过3次，认为是已经操作过啦
-    def check_claimed(self):
+    def _check_claimed(self):
         # 获取当前区块高度
         current_block = self.w3.eth.block_number
 
@@ -128,6 +139,12 @@ class Matr1x:
                 return True
 
         return False
+
+    # 获取钱包余额
+    def get_balance(self):
+        _balance = self.w3.eth.get_balance(self.eth_address)
+        balance = self.w3.from_wei(_balance, "ether")
+        return balance
 
     def register(self, page, url):
         last_tab = page.get_tab(0)
@@ -170,72 +187,54 @@ class Matr1x:
 
         logger.success(f" {self.eth_address} 激活完成...")
 
-    # 领取积分
-    def claim(self, page, index):
+    # 等待钥匙出现
+    def wait_key_visible(self, page):
         last_tab = page.get_tab(0)
-        point = self._get_point(last_tab)
-        if point == "--":
-            logger.warning("网络未加载成功...")
-            raise Exception("页面网络获取失败，重新加载...")
-
-        logger.success(f"========== 【{index}】 claim之前的分数为:{point} ==========")
-
-        # 判断是否已链接钱包
-        ele = last_tab.ele("x://span[text()=' Connect Wallet ']", timeout=5)
-        if ele:
-            ele.click()
-
-            # 点击metamask按钮
-            last_tab.ele("x://div[text()=' MetaMask ']").click()
-
-        # 打开盒子
         while True:
+            last_tab.get("https://matr1x.io/max-event")
             open = last_tab.ele("x://span[text()='Open ']/parent::button")
             disabled = open.attr("disabled")
-            if not open or disabled == "disabled":
-                logger.info(f"[{index}]claim结束...")
+            if open and not disabled:
+                logger.info(f"{self.eth_address} 出现钥匙, 继续执行任务...")
                 break
 
-            open.click()
+            time.sleep(10)
 
-            # 关闭弹窗
-            try:
-                time.sleep(0.5)
-                last_tab.ele("x://span[text()=' ok ']/parent::button").click()
-            except Exception as e:
-                logger.error(e)
+    # 领取积分
+    @retry(tries=3, delay=1)
+    def claim(self, page, index):
+        last_tab = page.get_tab(0)
+        last_tab.get("https://matr1x.io/max-event")
+        time.sleep(5)
 
-            time.sleep(random.randint(1, 3))
+        point = self._get_point(last_tab)
 
-        # claim 其他
-        eles = last_tab.eles("x://span[text()=' CLAIM ']/parent::button")
-        for ele in eles:
-            ele.click()
-            # 关闭弹窗
-            try:
-                time.sleep(1)
-                last_tab.ele("x://span[text()=' ok ']/parent::button").click()
-            except Exception as e:
-                logger.error(e)
-
+        # 链接钱包
+        self._connect_wallet(last_tab)
+        logger.success(f"========== 【{index}】 claim之前的分数为:{point} ==========")
+        self._open_key(last_tab, index)
+        # claim任务
+        self._claim_task(last_tab)
         point1 = self._get_point(last_tab)
-
         logger.success(f"========== 【{index}】 claim之后的分数为:{point1} ==========")
-
-        # 查询是否还有钥匙
-        key = last_tab.ele("Keys to be collected:").next()
-        key_count = 0
-        if int(key.text) > 0:
-            logger.error(f"[{index}] 还可以领取{key.text}个钥匙")
-            key_count = key.text
-
         # 将信息写入文件
-        update_point(index=index, point=point1, last_point=point, key_count=key_count)
+        update_point(index=index, point=point1, last_point=point)
+
+    # 获取钥匙数量
+    def get_key_count(self, page):
+        # 查询是否还有钥匙
+        last_tab = page.get_tab(0)
+        key = last_tab.ele("Keys to be collected:").next()
+        key_count = int(key.text)
+        if key_count > 0:
+            logger.info(f"[{self.eth_address}] 还可以领取{key.text}个钥匙")
+
+        return key_count
 
     # 完成任务
-    @retry(tries=10, delay=1)
+    @retry(ConnectXException, tries=5, delay=1)
     def task(self, page, index):
-        logger.info(f"{index} 准备开始执行任务...")
+        # logger.info(f"{index} 准备开始执行任务...")
         last_tab = page.get_tab(0)
         last_tab.get("https://matr1x.io/max-event")
         self.task_count = 0
@@ -244,23 +243,19 @@ class Matr1x:
             "x://div[@class='pointsTaskListWarp']//button[@class='el-button btn el-button--default']"
         )
         for ele in eles:
-
-            _ele = ele.parent(2).ele(".taskContent").child(1)
-            title = _ele.text
-
+            title = ele.parent(2).ele(".taskContent").child(1).text
             if "Open Case" in title or "Refer Friends" in title:
                 continue
 
             ele.click()
             time.sleep(2)
-
             ele = last_tab.ele(".downloadModel", timeout=3)
             if not ele:
-                logger.warning("点击后弹窗未出现....")
+                logger.warning(f"{title} 点击后弹窗未出现....")
                 continue
 
             ele = last_tab.ele(
-                "x://span[text()=' VERIFYING ']/parent::button", timeout=3
+                "x://span[text()=' VERIFYING ']/parent::button", timeout=2
             )
             if ele:
                 logger.warning("已经验证过, 正在等待任务...")
@@ -268,19 +263,25 @@ class Matr1x:
                 continue
 
             # 判断是否需要链接twitter
-            ele = last_tab.ele(
-                "x://span[text()=' Connect X ']/parent::button", timeout=3
-            )
-            if ele and not self.connect_x:
-                ele.click()
-
-                # 关联twitter
-                result = self._auth_x(page)
-                if result:
-                    self.task(page, index)
+            if not self.connect_x:
+                connect_x = last_tab.ele(
+                    "x://span[text()=' Connect X ']/parent::button", timeout=3
+                )
+                if not connect_x:
+                    self.connect_x = True
+                    logger.success(f"{self.eth_address}已经关联过twitter, 无需重复关联")
+                else:
+                    self.connect_x = False
+                    connect_x.click()
+                    # 关联twitter
+                    result = self._auth_x(page)
+                    if not result:
+                        raise ConnectXException()
 
             try:
-                last_tab.ele("x://span[text()=' VERIFY ']/parent::button").click()
+                last_tab.ele(
+                    "x://span[text()=' VERIFY ']/parent::button", timeout=3
+                ).click()
                 self.task_count += 1
                 time.sleep(3)
             except Exception as e:
@@ -289,4 +290,30 @@ class Matr1x:
         if self.task_count > 0:
             time.sleep(120)
 
-        logger.success(f"{index}所有任务执行完成...")
+        logger.success(f"{index} 所有任务执行完成...")
+
+    def claim_key(self, count=3, is_check=True):
+        balance = self.get_balance()
+        eth_address = self.eth_address
+        if balance == 0:
+            logger.warning(f"{self.eth_address} 余额为0, 请检查...")
+            return False
+
+        logger.info(f"[{eth_address}] 余额为 {balance} matic")
+
+        # 检查今日是否已经claim
+        is_claimed = self._check_claimed()
+        if is_claimed and is_check:
+            logger.warning(
+                f"[{eth_address}] 今日已经claim超过3次, 无需重复执行, 本次跳过"
+            )
+            return False
+
+        try:
+            for _ in range(count):
+                self._claim_key_with_contract()
+                time.sleep(random.randint(2, 5))
+        except Exception as e:
+            logger.error(e)
+
+        return True

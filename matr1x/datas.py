@@ -17,14 +17,12 @@ def get_infos_from_excel():
 
 
 def load_data_list():
-    global data_list
-    if data_list is None:
-        data_list = get_infos_from_excel()
-        for data in data_list:
-            pk = data.get("pk")
-            if pk:
-                newpk = aes_decrypt(pk, AES_KEY)
-                data["pk"] = newpk
+    data_list = get_infos_from_excel()
+    for data in data_list:
+        pk = data.get("pk")
+        if pk:
+            newpk = aes_decrypt(pk, AES_KEY)
+            data["pk"] = newpk
     return data_list
     # return [data_list[41]]
 
@@ -46,18 +44,27 @@ def find_data_by_index(index):
     return None
 
 
-def update_point(index, point, last_point, key_count=0):
+def update_key(index, key_count=0):
+    excel = Excel(file_path())
+    timestamp = get_current_date()
+    excel.updateItem(
+        "index",
+        index,
+        {
+            "key": key_count,
+        },
+    )
+
+
+def update_point(index, point, last_point):
     excel = Excel(file_path())
     logger.info(f"{point}积分写入 {index} ")
-    timestamp = get_current_date()
     excel.updateItem(
         "index",
         index,
         {
             "point": point,
             "last_point": last_point,
-            "key": key_count,
-            "claimed_date": timestamp,
         },
     )
 
@@ -68,4 +75,14 @@ def update_registed(address):
         "address",
         address,
         {"url": None, "registed": "1"},
+    )
+
+
+def update_claimed_date(index):
+    excel = Excel(file_path())
+    timestamp = get_current_date()
+    excel.updateItem(
+        "index",
+        index,
+        {"claimed_date": timestamp},
     )
