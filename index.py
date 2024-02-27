@@ -213,7 +213,7 @@ def _run_item(data):
     if result:
         matr1x.wait_key_visible(page, 3)
 
-    point = data.get("point")
+    point = data.get("point") or 0
     logger.success(f"========== 【{index}】 claim之前的分数为:{point} ==========")
     update_last_point(index=index, last_point=point)
 
