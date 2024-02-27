@@ -36,11 +36,8 @@ def get_wallets():
     return wallets
 
 
-@cli.command()
-def main():
+def _claim_key_contact():
     wallets = get_wallets()
-    # wallets = ["0x98662865f16a191ec04e32f939f88d3fa2219941ccfac41d12fd761c18cfae63"]
-
     while wallets:
         wallet = random.choice(wallets)
         Matr1x(wallet).claim_key()
@@ -50,6 +47,13 @@ def main():
     logger.success("所有钱包合约执行完成...")
 
 
+# 随机执行合约领取钥匙
+@cli.command("rck")
+def random_claim_key():
+    _claim_key_contact()
+
+
+# 获取余额，余额不足的打印告警
 @cli.command("b")
 def banlances():
     wallets = get_wallets()
@@ -88,15 +92,17 @@ def _get_page(index, ads_id, need_login=False):
     return page
 
 
-@cli.command()
+# 指定某个需要，指定数量通过合约领取钥匙
+@cli.command("claim")
 @click.option("-i", "--index", type=int, prompt="请输入浏览器序号", help="浏览器序号")
-def claim(index):
+@click.option("-c", "--count", type=int, default=4, help="浏览器序号")
+def claim(index, count):
 
     data = find_data_by_index(index)
     pk = data.get("pk")
 
     matr1x = Matr1x(pk)
-    matr1x.claim_key(4, False)
+    matr1x.claim_key(count, False)
 
 
 def _register(data):
@@ -202,23 +208,41 @@ def _run_item(data):
 
 
 @cli.command("r")
-def random_run():
+@click.option("-c", "--count", default=4, type=int, help="进程数")
+def random_run(count):
 
+    import multiprocessing
+
+    # 创建进程池
+    pool = multiprocessing.Pool(processes=count)
     datas = load_data_list()
+
+    async_result = []
+    # 循环直到列表为空
     while datas:
         data = random.choice(datas)
-        try:
-            result = _run_item(data)
-            if not result:
-                datas.remove(data)
-                continue
-        except Exception as e:
-            logger.error(e)
-
         datas.remove(data)
-        time.sleep(random.randint(1, 3))
 
-    logger.success("所有任务执行完成...")
+        # 使用进程池并行运行进程，设置回调函数
+        result = pool.apply_async(_run_item, args=(data,), callback=process_callback)
+        async_result.append(result)
+        time.sleep(3)
+
+        index = data.get("index")
+        print(f"{index} 已经添加到执行队列...")
+
+    for result in async_result:
+        result.get()
+
+    # 关闭进程池并等待所有进程完成
+    pool.close()
+    pool.join()
+
+    logger.info("==========所有的进程都已经跑完==========")
+
+
+def process_callback(result):
+    logger.info(f"{result}任务执行结束")
 
 
 if __name__ == "__main__":

@@ -320,11 +320,8 @@ class Matr1x:
             )
             return False
 
-        try:
-            for _ in range(count):
-                self._claim_key_with_contract()
-                time.sleep(random.randint(2, 5))
-        except Exception as e:
-            logger.error(e)
+        for _ in range(count):
+            self._claim_key_with_contract()
+            time.sleep(random.randint(2, 5))
 
         return True
