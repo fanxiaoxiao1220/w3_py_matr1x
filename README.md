@@ -13,6 +13,7 @@ matr1x 自动化任务系统
 * `.env_example` 改为 `.env`
 
     `AES_KEY` 是aes密钥，长度需要固定16位
+
     `POLYGON_API_KEY` polygon api key, https://polygonscan.com/login 注册申请`api_key`
 
 * config文件夹下 `/eth_wallet.xlsx1` 改为 `eth_wallet.xlsx`
