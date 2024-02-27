@@ -23,28 +23,40 @@ def cli():
     pass
 
 
-def get_wallets():
-    file_path = "config/bera_private_keys_hh_1000.txt"
-    wallets = []
-    with open(file_path, "r") as file:
-        count = 0
-        for private_key in file:
-            private_key_str = private_key.strip()
-            count += 1
-            wallets.append(private_key_str)
+def get_pks():
 
-    return wallets
+    datas = load_data_list()
+    pks = []
+
+    for data in datas:
+        pk = data.get("pk")
+        if pk:
+            pks.append(pk)
+
+    return pks
 
 
 def _claim_key_contact():
-    wallets = get_wallets()
-    while wallets:
-        wallet = random.choice(wallets)
+    pks = get_pks()
+    while pks:
+        wallet = random.choice(pks)
         Matr1x(wallet).claim_key()
-        wallets.remove(wallet)
+        pks.remove(wallet)
         time.sleep(random.randint(2, 5))
 
     logger.success("所有钱包合约执行完成...")
+
+
+def _get_referral_codes(index):
+    pass
+
+
+@cli.command("codes")
+def random_get_referral_codes():
+
+    _get_referral_codes()
+
+    # https://api.matr1x.io/matr1x-points/referral/overview
 
 
 # 随机执行合约领取钥匙
@@ -56,12 +68,13 @@ def random_claim_key():
 # 获取余额，余额不足的打印告警
 @cli.command("b")
 def banlances():
-    wallets = get_wallets()
+    pks = get_pks()
     list = []
-    for pk in wallets:
+    for pk in pks:
         matr1x = Matr1x(pk)
         eth_address = matr1x.eth_address
         balance = matr1x.get_balance()
+        logger.info(f"[{eth_address}] 余额为 {balance} matic")
         if balance < 0.5:
             logger.warning(f"[{eth_address}] 余额为不足 0.5 matic")
             list.append(eth_address)
@@ -69,7 +82,7 @@ def banlances():
     logger.info(list)
 
 
-def _get_page(index, ads_id, need_login=False):
+def _get_page(index, need_login=False):
 
     # 根据序号查找钱包信息
     wallet = find_wallet_by_index(index)
@@ -111,7 +124,7 @@ def _register(data):
     index = data.get("index")
     ads_id = data.get("ads_id")
 
-    page = _get_page(index, ads_id, True)
+    page = _get_page(index, True)
     mm = Metamask(page)
     network = mm.get_current_network()
 
@@ -172,7 +185,7 @@ def _run_item(data):
 
     # 通过合约进行claim
     result = matr1x.claim_key()
-    page = _get_page(index, ads_id, True)
+    page = _get_page(index, True)
     # 如果claim完成就循环等待钥匙出现
     if result:
         matr1x.wait_key_visible(page, 3)
@@ -247,5 +260,6 @@ def process_callback(result):
 
 if __name__ == "__main__":
     cli()
+    # banlances()
     # data = find_data_by_index(51)
     # _run_item(data)
