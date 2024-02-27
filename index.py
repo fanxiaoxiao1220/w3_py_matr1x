@@ -122,7 +122,6 @@ def _register(data):
     url = data.get("url")
     pk = data.get("pk")
     index = data.get("index")
-    ads_id = data.get("ads_id")
 
     page = _get_page(index, True)
     mm = Metamask(page)
@@ -133,7 +132,6 @@ def _register(data):
 
     matr1x = Matr1x(pk)
     matr1x.register(page, url)
-    matr1x.connect_twitter(page)
 
     update_registed(matr1x.eth_address)
 
