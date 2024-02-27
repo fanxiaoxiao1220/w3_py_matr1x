@@ -127,17 +127,20 @@ class Matr1x:
         # 获取当前区块高度
         current_block = self.w3.eth.block_number
 
-        results = Polygon().txlist(self.eth_address, current_block)
-        # logger.info(results)
-        claimKey_calls = 0
-        for tx in results:
-            timestamp = tx.get("timeStamp")
-            func = tx.get("functionName")
-            if "claimKey()" in func and is_same_day(int(timestamp)):
-                claimKey_calls += 1
+        try:
+            results = Polygon().txlist(self.eth_address, current_block)
+            # logger.info(results)
+            claimKey_calls = 0
+            for tx in results:
+                timestamp = tx.get("timeStamp")
+                func = tx.get("functionName")
+                if "claimKey()" in func and is_same_day(int(timestamp)):
+                    claimKey_calls += 1
 
-            if claimKey_calls >= 3:
-                return True
+                if claimKey_calls >= 3:
+                    return True
+        except Exception as e:
+            logger.error(e)
 
         return False
 

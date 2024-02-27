@@ -109,7 +109,8 @@ def banlances():
 def _get_page(index, need_login=False):
 
     # 根据序号查找钱包信息
-    wallet = find_wallet_by_index(index)
+
+    wallet = find_data_by_index(index)
     if not wallet:
         logger.warning(f"index [{index}] 获取对应的钱包信息为空, 请检查配置项")
         return
