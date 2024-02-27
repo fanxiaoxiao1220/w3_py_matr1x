@@ -1,4 +1,5 @@
 import requests, random, time
+import json
 from web3 import Web3, HTTPProvider
 from eth_account import Account
 from retry import retry
@@ -325,3 +326,31 @@ class Matr1x:
             time.sleep(random.randint(2, 5))
 
         return True
+
+    def get_referral_codes(self, page, index):
+        last_tab = page.get_tab(0)
+        last_tab.get("https://matr1x.io/max-event")
+        time.sleep(3)
+
+        page.listen.start("https://api.matr1x.io/matr1x-points/referral/overview")
+        last_tab.ele("x://p[@class='invite']").click()
+
+        codes = []
+        for packet in page.listen.steps():
+
+            response = packet.response
+            body = json.loads(response.raw_body)
+            code = body.get("code")
+            if code != 0:
+                return codes
+
+            data = body.get("data")
+            taskCodes = data.get("taskCodes")
+            for task in taskCodes:
+                state = task.get("state")
+                inviteCode = task.get("inviteCode")
+                if state == 1:
+                    codes.append(inviteCode)
+
+            logger.info(f"{index} code 有:{codes}")
+            return codes

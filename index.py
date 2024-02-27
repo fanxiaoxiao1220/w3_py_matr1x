@@ -24,16 +24,8 @@ def cli():
 
 
 def get_pks():
-
     datas = load_data_list()
-    pks = []
-
-    for data in datas:
-        pk = data.get("pk")
-        if pk:
-            pks.append(pk)
-
-    return pks
+    return [data.get("pk") for data in datas if data.get("pk")]
 
 
 def _claim_key_contact():
@@ -47,16 +39,47 @@ def _claim_key_contact():
     logger.success("所有钱包合约执行完成...")
 
 
-def _get_referral_codes(index):
-    pass
+def _get_referral_codes(data):
+    index = data.get("index")
+    pk = data.get("pk")
+    page = _get_page(index, True)
+    matr1x = Matr1x(pk)
+    codes = matr1x.get_referral_codes(page, index)
+    page.close()
+    return codes
+
+
+def write_code2_txt(codes):
+    filename = "codes.txt"
+    with open(filename, "a") as f:
+        for code in codes:
+            f.write(f"{code}\n")
 
 
 @cli.command("codes")
+@click.option("-i", "--index", type=int, prompt="请输入浏览器序号", help="浏览器序号")
+def random_get_referral_codes(index):
+    data = find_data_by_index(index)
+    codes = _get_referral_codes(data)
+    write_code2_txt(codes)
+
+
+# 一次性随机获取邀请码
+@cli.command("rc")
 def random_get_referral_codes():
+    all_codes = []
+    datas = load_data_list()
+    while datas:
+        data = random.choice(datas)
+        datas.remove(data)
+        try:
+            codes = _get_referral_codes(data)
+            write_code2_txt(codes)
+            all_codes.extend(codes)
+        except Exception as e:
+            logger.error(e)
 
-    _get_referral_codes()
-
-    # https://api.matr1x.io/matr1x-points/referral/overview
+    logger.info(all_codes)
 
 
 # 随机执行合约领取钥匙
@@ -74,14 +97,15 @@ def banlances():
         matr1x = Matr1x(pk)
         eth_address = matr1x.eth_address
         balance = matr1x.get_balance()
-        logger.info(f"[{eth_address}] 余额为 {balance} matic")
+        logger.debug(f"[{eth_address}] 余额为 {balance} matic")
         if balance < 0.5:
-            logger.warning(f"[{eth_address}] 余额为不足 0.5 matic")
             list.append(eth_address)
 
+    logger.info("余额不足0.5的地址有: ")
     logger.info(list)
 
 
+# 获取page，并且通过小狐狸钱包登录
 def _get_page(index, need_login=False):
 
     # 根据序号查找钱包信息
@@ -256,8 +280,25 @@ def process_callback(result):
     logger.info(f"{result}任务执行结束")
 
 
+# 获取唯一邀请码
+def get_uni_codes():
+    filename = "codes.txt"  # 替换为你的文件名
+
+    # 读取文件内容并去除每行末尾的换行符
+    with open(filename, "r") as f:
+        lines = f.read().splitlines()
+
+    # 使用 set 进行去重
+    unique_lines = set(lines)
+
+    # 输出去重后的结果
+    for line in unique_lines:
+        print(line)
+
+
 if __name__ == "__main__":
     cli()
+    # get_uni_codes()
     # banlances()
     # data = find_data_by_index(51)
     # _run_item(data)

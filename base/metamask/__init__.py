@@ -82,7 +82,7 @@ class Metamask:
         self.password = password
 
         # 开始访问插件
-        logger.info(f"准备访问{METAMASK_EXTENSION_PATH}")
+        # logger.info(f"准备访问{METAMASK_EXTENSION_PATH}")
         self.page.get(METAMASK_EXTENSION_PATH)
         self.page.close_other_tabs()
 
@@ -110,7 +110,7 @@ class Metamask:
 
     def wallet_login(self, password: str):
         # 开始访问插件
-        logger.info(f"准备访问{METAMASK_EXTENSION_PATH}")
+        # logger.info(f"准备访问{METAMASK_EXTENSION_PATH}")
         self.page.get(METAMASK_EXTENSION_PATH)
 
         ele = self.page.ele(".whats-new-popup__notifications", timeout=3)
