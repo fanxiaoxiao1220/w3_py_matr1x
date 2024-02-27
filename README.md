@@ -43,3 +43,10 @@ matr1x 自动化任务系统, 目前只支持基于 adspower 指纹浏览器进�
 
       * 批量查询余额，低于0.5马蹄会告警
       `python index.py b`
+
+- 一次性获取邀请码
+  `python index.py rc`
+  获取后写入`codes.txt`文件中
+
+- 获取某个浏览器的邀请码
+  `python index.py codes -i 1`
