@@ -56,7 +56,7 @@ def update_key(index, key_count=0):
     )
 
 
-def update_point(index, point, last_point):
+def update_point(index, point):
     excel = Excel(file_path())
     logger.info(f"{point}积分写入 {index} ")
     excel.updateItem(
@@ -64,6 +64,16 @@ def update_point(index, point, last_point):
         index,
         {
             "point": point,
+        },
+    )
+
+
+def update_last_point(index, last_point):
+    excel = Excel(file_path())
+    excel.updateItem(
+        "index",
+        index,
+        {
             "last_point": last_point,
         },
     )

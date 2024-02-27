@@ -49,7 +49,7 @@ class Matr1x:
         logger.error(f"{self.eth_address} claimKey失败!")
         return False
 
-    def _get_point(self, tab):
+    def get_point(self, tab):
         eles = tab.eles("x://div[@class='value']")
         if len(eles) >= 3:
             point = eles[2].text.strip()
@@ -188,15 +188,21 @@ class Matr1x:
         logger.success(f" {self.eth_address} 激活完成...")
 
     # 等待钥匙出现
-    def wait_key_visible(self, page):
+    # FIXME: 改成钥匙数量完全匹配才算成功
+    def wait_key_visible(self, page, key_count=0):
         last_tab = page.get_tab(0)
         while True:
             last_tab.get("https://matr1x.io/max-event")
-            open = last_tab.ele("x://span[text()='Open ']/parent::button")
-            disabled = open.attr("disabled")
-            if open and not disabled:
+            count = self.get_unpack_key_count(page)
+            if count == key_count:
                 logger.info(f"{self.eth_address} 出现钥匙, 继续执行任务...")
                 break
+
+            # open = last_tab.ele("x://span[text()='Open ']/parent::button")
+            # disabled = open.attr("disabled")
+            # if open and not disabled:
+            #     logger.info(f"{self.eth_address} 出现钥匙, 继续执行任务...")
+            #     break
 
             time.sleep(10)
 
@@ -207,18 +213,23 @@ class Matr1x:
         last_tab.get("https://matr1x.io/max-event")
         time.sleep(5)
 
-        point = self._get_point(last_tab)
-
         # 链接钱包
         self._connect_wallet(last_tab)
-        logger.success(f"========== 【{index}】 claim之前的分数为:{point} ==========")
+
         self._open_key(last_tab, index)
         # claim任务
         self._claim_task(last_tab)
-        point1 = self._get_point(last_tab)
-        logger.success(f"========== 【{index}】 claim之后的分数为:{point1} ==========")
-        # 将信息写入文件
-        update_point(index=index, point=point1, last_point=point)
+
+    # 获取claim过未打开的钥匙数量
+    def get_unpack_key_count(self, page):
+        # 查询是否还有钥匙
+        last_tab = page.get_tab(0)
+        key = last_tab.ele("Key Count:").next()
+        key_count = int(key.text)
+        if key_count > 0:
+            logger.info(f"[{self.eth_address}] 待打开钥匙 {key.text}个")
+
+        return key_count
 
     # 获取钥匙数量
     def get_key_count(self, page):

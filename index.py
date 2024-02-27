@@ -8,7 +8,13 @@ from base.metamask import Metamask
 from matr1x.datas import load_data_list
 from matr1x.index import Matr1x
 from utils.hhtime import get_current_date
-from matr1x.datas import update_registed, find_data_by_index, update_claimed_date
+from matr1x.datas import (
+    update_registed,
+    find_data_by_index,
+    update_claimed_date,
+    update_last_point,
+    update_point,
+)
 
 
 # 如果是多个命令，这里需要用group
@@ -163,7 +169,11 @@ def _run_item(data):
     page = _get_page(index, ads_id, True)
     # 如果claim完成就循环等待钥匙出现
     if result:
-        matr1x.wait_key_visible(page)
+        matr1x.wait_key_visible(page, 3)
+
+    point = data.get("point")
+    logger.success(f"========== 【{index}】 claim之前的分数为:{point} ==========")
+    update_last_point(index=index, last_point=point)
 
     # 完成任务, 领取积分
     for _ in range(3):
@@ -178,9 +188,14 @@ def _run_item(data):
         result = matr1x.claim_key(key_count, False)
         # 如果claim完成就循环等待钥匙出现
         if result:
-            matr1x.wait_key_visible(page)
+            matr1x.wait_key_visible(page, key_count)
         matr1x.claim(page, index)
 
+    # 更新point
+    point = matr1x.get_point(page.get_tab(0))
+    logger.success(f"========== 【{index}】 claim之后的分数为:{point} ==========")
+    # 将信息写入文件
+    update_point(index=index, point=point)
     update_claimed_date(index)
 
     page.close()
@@ -207,6 +222,6 @@ def random_run():
 
 
 if __name__ == "__main__":
-    # cli()
-    data = find_data_by_index(48)
-    _run_item(data)
+    cli()
+    # data = find_data_by_index(51)
+    # _run_item(data)
