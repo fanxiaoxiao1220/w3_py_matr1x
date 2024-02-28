@@ -1,6 +1,8 @@
+import os
 from DrissionPage import ChromiumPage, ChromiumOptions
 from fake_useragent import UserAgent
 from loguru import logger
+
 
 from base.utils.adspower import *
 from base.utils.bit import get_debug_address_with_bite
@@ -46,42 +48,39 @@ def get_page_by_browser_user():
 #         return get_page_with_browser_name(name)
 
 
-def get_page_with_browser_name(name):
-
-    # co = _get_system_browser_options(name)
-    co = ChromiumOptions().auto_port()
+def get_page_with_browser_name(name, data):
+    co = _get_system_browser_options(name, data)
     return ChromiumPage(co)
 
 
 # 获取options
-def _get_system_browser_options(name):
+def _get_system_browser_options(name, data):
 
     co = ChromiumOptions().auto_port(True)
+    if not data:
+        raise Exception(f"输入的 {name} 不存在, 请检查")
 
-    # # 设置UA、代理IP、用户缓存
-    # if bool(browser.user_agent):
-    #     co.set_user_agent(browser.user_agent)
-    # if bool(browser.ip_address):
-    #     logger.info(f"{name} ip: {browser.ip_address}")
-    #     parts = browser.ip_address.split(":")
-    #     # 无用户名密码直接用浏览器接口
-    #     if len(parts) == 2:
-    #         co.set_proxy(f"http://{browser.ip_address}")
-    #     if len(parts) == 3:
-    #         co.set_proxy(browser.ip_address)
-    #     # 需要授权的，调用浏览器插件
-    #     elif len(parts) == 4:
-    #         host = parts[0]
-    #         port = parts[1]
-    #         username = parts[2]
-    #         pwd = parts[3]
-    #         extension_path = _get_auth_proxy_extention(host, port, username, pwd)
-    #         logger.debug(f"extension_path {extension_path}")
-    #         co.add_extension(extension_path)
+    # 设置UA、代理IP、用户缓存
+    ua = data.get("user_agent")
+    proxy = data.get("proxy")
+    if bool(ua):
+        co.set_user_agent(ua)
+    if bool(proxy):
+        logger.info(f"{name} ip: {proxy}")
+        parts = proxy.split(":")
+        # 无用户名密码直接用浏览器接口
+        if len(parts) == 2:
+            co.set_proxy(f"http://{proxy}")
+        if len(parts) == 3:
+            co.set_proxy(proxy)
 
-    # user_data_path = rf"{USER_DATA_PATH}/{name}"
-    # co.set_paths(user_data_path=user_data_path)
-    # if METAMASK_PATH:
-    #     co.add_extension(rf"{METAMASK_PATH}")
+    user_data_path = rf"{USER_DATA_PATH}/{name}"
+    if not os.path.exists(user_data_path):
+        os.makedirs(user_data_path)
 
-    # return co
+    co.set_paths(user_data_path=user_data_path)
+    if METAMASK_PATH:
+        _path = rf"{METAMASK_PATH}"
+        co.add_extension(_path)
+
+    return co

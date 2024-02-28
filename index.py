@@ -1,10 +1,12 @@
 import random, time
 import click
 from loguru import logger
+from fake_useragent import UserAgent
 from retry import retry
 from config.eth_wallet import *
-from base.utils.dp import get_page_by_adspwer_id
+from base.utils.dp import get_page_by_adspwer_id, get_page_with_browser_name
 from base.metamask import Metamask
+
 from matr1x.datas import load_data_list
 from matr1x.index import Matr1x
 from utils.hhtime import get_current_date
@@ -105,20 +107,28 @@ def banlances():
     logger.info(list)
 
 
+def _get_page_with_browser_name(index):
+
+    data = find_data_by_index(index)
+    page = get_page_with_browser_name(index, data)
+
+    return page
+
+
 # 获取page，并且通过小狐狸钱包登录
 def _get_page(index, need_login=False):
 
     # 根据序号查找钱包信息
-
     wallet = find_data_by_index(index)
     if not wallet:
         logger.warning(f"index [{index}] 获取对应的钱包信息为空, 请检查配置项")
         return
 
     ads_id = wallet.get("ads_id")
-
-    # 打开指纹浏览器，并关闭其他窗口
-    page = get_page_by_adspwer_id(ads_id)
+    if ads_id:
+        page = get_page_by_adspwer_id(ads_id)
+    else:
+        page = _get_page_with_browser_name(index)
     page.set.window.max()
     page.close_other_tabs()
 
@@ -178,10 +188,10 @@ def _run_item(data):
     matr1x = Matr1x(pk)
 
     # ads_id 为空跳过
-    ads_id = data.get("ads_id")
-    if not ads_id:
-        logger.warning(f"{index} 获取ads_id为空, 跳过...")
-        return False
+    # ads_id = data.get("ads_id")
+    # if not ads_id:
+    #     logger.warning(f"{index} 获取ads_id为空, 跳过...")
+    #     return False
 
     # 当天执行过不再执行
     claimed_date = data.get("claimed_date")
@@ -298,8 +308,10 @@ def get_uni_codes():
 
 
 if __name__ == "__main__":
-    cli()
+    # cli()
+    # logger.info(get_pks())
     # get_uni_codes()
     # banlances()
-    # data = find_data_by_index(51)
-    # _run_item(data)
+
+    data = find_data_by_index(1000)
+    _run_item(data)

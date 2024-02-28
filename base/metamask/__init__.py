@@ -12,7 +12,7 @@ class LoadException(Exception):
 def check_metamask_page(func):
     def wrapper(self, *args, **kwargs):
         last_tab = self.page.get_tab(0)
-        if last_tab.title != "MetaMask Notification":
+        if "MetaMask" not in last_tab.title:
             logger.warning("当前页面不是钱包页面, 请确认...")
             return
         return func(self, *args, **kwargs)

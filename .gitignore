@@ -248,12 +248,11 @@ Temporary Items
 .nfs*
 
 # excel
-*.xlsx
+**/*.xlsx
+**/*.csv
 .vscode
 config.json
 
 __pycache__
 dev_venv
 
-bera_private_keys_hh_1000.txt
-datas.xlsx

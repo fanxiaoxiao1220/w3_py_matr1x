@@ -69,7 +69,8 @@ class Matr1x:
 
         for packet in page.listen.steps():
             response = packet.response
-            code = response.raw_body.get("code")
+            body = json.loads(response.raw_body)
+            code = body.get("code")
             if code != 0:
                 logger.warning(response)
                 self.connect_x = False

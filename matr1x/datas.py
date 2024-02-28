@@ -63,7 +63,7 @@ def update_point(index, point):
         "index",
         index,
         {
-            "point": point,
+            "point": str(point),
         },
     )
 
@@ -74,7 +74,7 @@ def update_last_point(index, last_point):
         "index",
         index,
         {
-            "last_point": last_point,
+            "last_point": str(last_point),
         },
     )
 
