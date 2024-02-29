@@ -181,10 +181,10 @@ def run_item(index):
 def _run_item(data):
     index = data.get("index")
     pk = data.get("pk")
+    page = None
     if not pk:
         logger.warning(f"{index} 获取pk为空, 跳过...")
         return False
-
     try:
         matr1x = Matr1x(pk)
 

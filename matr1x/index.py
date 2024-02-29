@@ -5,12 +5,13 @@ from eth_account import Account
 from retry import retry
 from loguru import logger
 from config.abi_config import nft_abi
+from config import POLYGON_RPC
 from utils.hhtime import is_same_day
 from utils.polygon import Polygon
 from base.metamask import Metamask
 from matr1x.datas import update_point, update_registed
 
-rpc = "https://polygon-mainnet.infura.io/v3/9559c1dc84ca4a87a9ebad7d7b7da7a2"
+rpc = POLYGON_RPC
 contrac_address = "0x0f3284bFEbc5f55B849c8CF792D39cC0f729e0BC"
 chainId = 137
 

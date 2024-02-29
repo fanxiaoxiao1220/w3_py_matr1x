@@ -12,6 +12,8 @@ USER_DATA_PATH = environ.get("USER_DATA_PATH")
 
 # polygon api key
 POLYGON_API_KEY = environ.get("POLYGON_API_KEY")
+POLYGON_RPC = environ.get("POLYGON_RPC")
+
 
 # 小狐狸钱包附件地址
 METAMASK_PATH = environ.get("METAMASK_PATH")
