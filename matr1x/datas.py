@@ -96,3 +96,15 @@ def update_claimed_date(index):
         index,
         {"claimed_date": timestamp},
     )
+
+
+def insert_data(eth_address, w, pk, pwd, ua):
+
+    logger.info(eth_address)
+    logger.info(w)
+    logger.info(pk)
+    logger.info(pwd)
+
+    # data = {"address": eth_address, "pk": pk, "pwd": pwd}
+    # excel = Excel(file_path())
+    # excel.appendExcel(data)

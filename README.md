@@ -21,8 +21,7 @@ matr1x 自动化任务系统, 目前只支持基于 adspower 指纹浏览器进�
 
   `POLYGON_API_KEY` polygon api key, https://polygonscan.com/login 注册申请`api_key`
 
-- config 文件夹下 `/eth_wallet.xlsx1` 改为 `eth_wallet.xlsx`
-  更改后初始化数据
+  `POLYGON_RPC` polygon rpc , https://infura.io 注册申请
 
 - matr1x 文件夹下 `datas.xlsx1` 改为 `datas.xlsx`
   更改后需初始化数据 `index`,`ads_id`,`address`,`pk`, `pwd` 这几个字段
@@ -31,11 +30,10 @@ matr1x 自动化任务系统, 目前只支持基于 adspower 指纹浏览器进�
   `pk` 钱包私钥，需要通过 aes 加密存储
   `pwd` 小狐狸钱包密码
 
-### 2. 执行
+### 2. 执行- 单个执行
 
-- 单个执行
-  `python index.py ri -i index`
-  这里的`index`就是 `matr1x/data.xlsx`表格中`index`
+`python index.py ri -i index`
+这里的`index`就是 `matr1x/data.xlsx`表格中`index`
 
 - 随机批量执行
   `python index.py r`

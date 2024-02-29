@@ -1,13 +1,14 @@
 import random, time
-import click
+import click, asyncio
 from loguru import logger
 from fake_useragent import UserAgent
 from retry import retry
 from config.eth_wallet import *
 from base.utils.dp import get_page_by_adspwer_id, get_page_with_browser_name
 from base.metamask import Metamask
+from utils.create_eth_account import generate_accounts
+from utils.proxy import random_choice_proxy
 
-from matr1x.datas import load_data_list
 from matr1x.index import Matr1x
 from utils.hhtime import get_current_date
 from matr1x.datas import (
@@ -16,6 +17,8 @@ from matr1x.datas import (
     update_claimed_date,
     update_last_point,
     update_point,
+    load_data_list,
+    insert_data,
 )
 
 
@@ -169,6 +172,27 @@ def _register(data):
     matr1x.register(page, url)
 
     update_registed(matr1x.eth_address)
+
+
+async def _generate_data(count, password):
+    accounts = generate_accounts(count)
+
+    for account in accounts:
+        pk = account[0]
+        w = account[1]
+        eth_address = account[2]
+        ua = UserAgent(os=["windows", "macos"]).chrome
+        proxy = random_choice_proxy()
+
+        insert_data(eth_address, w, pk, password, ua)
+
+
+# 批量生成数据
+@cli.command("gd")
+@click.option("-c", "--count", type=int, default=100, help="生成的数据条数")
+@click.option("-p", "--password", type=str, help="小狐狸钱包密码")
+def generate_data(count, password):
+    asyncio.run(_generate_data(count, password))
 
 
 @cli.command("ri")

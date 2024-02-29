@@ -254,5 +254,5 @@ Temporary Items
 config.json
 
 __pycache__
-dev_venv
+.venv
 
