@@ -193,7 +193,7 @@ class Matr1x:
         logger.success(f" {self.eth_address} 激活完成...")
 
     # 等待钥匙出现
-    # FIXME: 改成钥匙数量完全匹配才算成功
+    @retry(tries=3, delay=1)
     def wait_key_visible(self, page, key_count=0):
         last_tab = page.get_tab(0)
         while True:
@@ -202,12 +202,6 @@ class Matr1x:
             if count == key_count:
                 logger.info(f"{self.eth_address} 出现钥匙, 继续执行任务...")
                 break
-
-            # open = last_tab.ele("x://span[text()='Open ']/parent::button")
-            # disabled = open.attr("disabled")
-            # if open and not disabled:
-            #     logger.info(f"{self.eth_address} 出现钥匙, 继续执行任务...")
-            #     break
 
             time.sleep(10)
 

@@ -185,72 +185,77 @@ def _run_item(data):
         logger.warning(f"{index} 获取pk为空, 跳过...")
         return False
 
-    matr1x = Matr1x(pk)
+    try:
+        matr1x = Matr1x(pk)
 
-    # ads_id 为空跳过
-    # ads_id = data.get("ads_id")
-    # if not ads_id:
-    #     logger.warning(f"{index} 获取ads_id为空, 跳过...")
-    #     return False
+        # ads_id 为空跳过
+        # ads_id = data.get("ads_id")
+        # if not ads_id:
+        #     logger.warning(f"{index} 获取ads_id为空, 跳过...")
+        #     return False
 
-    # 当天执行过不再执行
-    claimed_date = data.get("claimed_date")
-    current_date = get_current_date()
-    if claimed_date == current_date:
-        logger.warning(f"[{index}]当天已经执行过，跳过...")
-        return False
+        # 当天执行过不再执行
+        claimed_date = data.get("claimed_date")
+        current_date = get_current_date()
+        if claimed_date == current_date:
+            logger.warning(f"[{index}]当天已经执行过，跳过...")
+            return False
 
-    # 余额检查
-    balance = matr1x.get_balance()
-    eth_address = matr1x.eth_address
-    if balance == 0:
-        logger.warning(f"{eth_address} 余额为0, 请充值...")
-        return False
+        # 余额检查
+        balance = matr1x.get_balance()
+        eth_address = matr1x.eth_address
+        if balance == 0:
+            logger.warning(f"{eth_address} 余额为0, 请充值...")
+            return False
 
-    # 未注册先注册
-    registed = data.get("registed")
-    if not registed:
-        logger.warning(f"{index} 还未注册, 进行注册...")
-        _register(data)
+        # 未注册先注册
+        registed = data.get("registed")
+        if not registed:
+            logger.warning(f"{index} 还未注册, 进行注册...")
+            _register(data)
 
-    address = data.get("address")
-    logger.info(f"准备执行【{index}】号浏览器, 钱包地址：【{address}】")
+        address = data.get("address")
+        logger.info(f"准备执行【{index}】号浏览器, 钱包地址：【{address}】")
 
-    # 通过合约进行claim
-    result = matr1x.claim_key()
-    page = _get_page(index, True)
-    # 如果claim完成就循环等待钥匙出现
-    if result:
-        matr1x.wait_key_visible(page, 3)
-
-    point = data.get("point") or 0
-    logger.success(f"========== 【{index}】 claim之前的分数为:{point} ==========")
-    update_last_point(index=index, last_point=point)
-
-    # 完成任务, 领取积分
-    for _ in range(3):
-        matr1x.claim(page, index)
-        try:
-            matr1x.task(page, index)
-        except Exception as e:
-            logger.error(e)
-
-    key_count = matr1x.get_key_count(page)
-    if key_count > 0:
-        result = matr1x.claim_key(key_count, False)
+        # 通过合约进行claim
+        result = matr1x.claim_key()
+        page = _get_page(index, True)
         # 如果claim完成就循环等待钥匙出现
         if result:
-            matr1x.wait_key_visible(page, key_count)
-        matr1x.claim(page, index)
+            matr1x.wait_key_visible(page, 3)
 
-    # 更新point
-    point = matr1x.get_point(page.get_tab(0))
-    logger.success(f"========== 【{index}】 claim之后的分数为:{point} ==========")
-    # 将信息写入文件
-    update_point(index=index, point=point)
-    update_claimed_date(index)
+        point = data.get("point") or 0
+        logger.success(f"========== 【{index}】 claim之前的分数为:{point} ==========")
+        update_last_point(index=index, last_point=point)
 
-    page.close()
+        # 完成任务, 领取积分
+        for _ in range(3):
+            matr1x.claim(page, index)
+            try:
+                matr1x.task(page, index)
+            except Exception as e:
+                logger.error(e)
+
+        key_count = matr1x.get_key_count(page)
+        if key_count > 0:
+            result = matr1x.claim_key(key_count, False)
+            # 如果claim完成就循环等待钥匙出现
+            if result:
+                matr1x.wait_key_visible(page, key_count)
+            matr1x.claim(page, index)
+
+        # 更新point
+        point = matr1x.get_point(page.get_tab(0))
+        logger.success(f"========== 【{index}】 claim之后的分数为:{point} ==========")
+        # 将信息写入文件
+        update_point(index=index, point=point)
+        update_claimed_date(index)
+
+    except Exception as e:
+        logger.error(e)
+    finally:
+        if page:
+            page.close()
 
 
 @cli.command("r")
@@ -264,12 +269,10 @@ def random_run(count):
     datas = load_data_list()
 
     async_result = []
-    # 循环直到列表为空
     while datas:
         data = random.choice(datas)
         datas.remove(data)
 
-        # 使用进程池并行运行进程，设置回调函数
         result = pool.apply_async(_run_item, args=(data,), callback=process_callback)
         async_result.append(result)
         time.sleep(3)
@@ -308,10 +311,10 @@ def get_uni_codes():
 
 
 if __name__ == "__main__":
-    # cli()
+    cli()
     # logger.info(get_pks())
     # get_uni_codes()
     # banlances()
 
-    data = find_data_by_index(1000)
-    _run_item(data)
+    # data = find_data_by_index(1000)
+    # _run_item(data)
