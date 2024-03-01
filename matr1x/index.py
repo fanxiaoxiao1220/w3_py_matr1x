@@ -154,7 +154,7 @@ class Matr1x:
 
     def register(self, page, invite_code):
         last_tab = page.get_tab(0)
-        url = "https://matr1x.io/max-event?ic={invite_code}"
+        url = f"https://matr1x.io/max-event?ic={invite_code}"
         last_tab.get(url)
 
         # 点击加入
