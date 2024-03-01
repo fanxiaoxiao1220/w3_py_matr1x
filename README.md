@@ -24,21 +24,16 @@ matr1x 自动化任务系统
 
   `POLYGON_RPC` polygon rpc , https://infura.io 注册申请
 
-- matr1x 文件夹下 `datas.xlsx1` 改为 `datas.xlsx`
-  更改后需初始化数据 `index`,`ads_id`,`address`,`pk`, `pwd` 这几个字段
-  `ads_id` adspower 指纹浏览器的编号
-  `address` eth 钱包地址
-  `pk` 钱包私钥，需要通过 aes 加密存储
-  `pwd` 小狐狸钱包密码
-
 ### 2. 数据生成+配置
+
+- matr1x 文件夹下 `datas.xlsx1` 改为 `datas.xlsx`
 
 批量生成 10 条数据
 
 `python3 helper.py gd -c 10`
 
 还需手工配置字段：
-`invite_code`： 邀请码， 首次需向其他人获取，激活第二天后，可以执行 `python index.py rc` 后在 `codes.txt` 获取
+`invite_code`： 邀请码， 首次需向其他人获取，激活第二天后，执行 `python index.py rc` 后在 `codes.txt` 获取
 `tw_token`： twitter 登录 token 可在 https://hstock.org/ru/category/twitter 购买
 `proxy`：代理， 可选，配置了会更安全，目前只支持不带授权的代理，如果是运行 adspower 指纹浏览器，可空
 `ads_id` adspower 指纹浏览器编号，可选，如果只在系统浏览器运行，可空
