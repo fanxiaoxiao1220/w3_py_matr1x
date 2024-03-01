@@ -1,6 +1,7 @@
 # w3_py_matr1x
 
-matr1x 自动化任务系统, 目前只支持基于 adspower 指纹浏览器进行批量操作
+matr1x 自动化任务系统
+支持 adspower 指纹浏览器、系统浏览器
 
 前提：
 
@@ -39,7 +40,8 @@ matr1x 自动化任务系统, 目前只支持基于 adspower 指纹浏览器进�
 还需手工配置字段：
 `invite_code`： 邀请码， 首次需向其他人获取，激活第二天后，可以执行 `python index.py rc` 后在 `codes.txt` 获取
 `tw_token`： twitter 登录 token 可在 https://hstock.org/ru/category/twitter 购买
-`proxy`：代理， 可选，配置了会更安全，目前只支持不带授权的代理
+`proxy`：代理， 可选，配置了会更安全，目前只支持不带授权的代理，如果是运行 adspower 指纹浏览器，可空
+`ads_id` adspower 指纹浏览器编号，可选，如果只在系统浏览器运行，可空
 
 字段配置完成后，就可以下一步了。
 
