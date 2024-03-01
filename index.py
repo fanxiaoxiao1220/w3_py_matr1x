@@ -82,7 +82,7 @@ def random_get_referral_codes():
         datas.remove(data)
         try:
             codes = _get_referral_codes(data)
-            write_code2_txt(codes)
+            _write_code2_txt(codes)
             all_codes.extend(codes)
         except Exception as e:
             logger.error(e)
