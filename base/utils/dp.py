@@ -61,7 +61,7 @@ def _get_system_browser_options(name, data):
         raise Exception(f"输入的 {name} 不存在, 请检查")
 
     # 设置UA、代理IP、用户缓存
-    ua = data.get("user_agent")
+    ua = data.get("ua")
     proxy = data.get("proxy")
     if bool(ua):
         co.set_user_agent(ua)

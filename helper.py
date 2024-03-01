@@ -6,7 +6,6 @@ from matr1x.datas import insert_data
 from loguru import logger
 from base.utils.aes import aes_decrypt, aes_encrypt
 from config import AES_KEY
-from utils.create_eth_account import get_pk_from_mnemo
 
 
 @click.group()
