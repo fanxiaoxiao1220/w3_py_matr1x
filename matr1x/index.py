@@ -202,7 +202,7 @@ class Matr1x:
         last_tab = page.get_tab(0)
         while True:
             last_tab.get("https://matr1x.io/max-event")
-            logger.info("已经打开的钥匙 {key_count}")
+            logger.info(f"已经打开的钥匙 {key_count}")
             count = self.get_unpack_key_count(page)
             if count >= key_count:
                 logger.info(f"{self.eth_address} 出现钥匙, 继续执行任务...")
@@ -284,7 +284,7 @@ class Matr1x:
             # 判断是否需要链接twitter
             if not self.connect_x:
                 connect_x = last_tab.ele(
-                    "x://span[text()=' Connect X ']/parent::button", timeout=3
+                    "x://span[text()=' Connect Twitter ']/parent::button", timeout=3
                 )
                 if not connect_x:
                     self.connect_x = True
