@@ -121,7 +121,7 @@ class Excel:
             df = pd.read_excel(self.excel_name)
 
             # 去除左右两边的空格，对每一列应用 strip
-            df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+            df = df.map(lambda x: x.strip() if isinstance(x, str) else x)
 
             # 转换为 JSON 格式
             json_data = df.to_json(orient="records")
