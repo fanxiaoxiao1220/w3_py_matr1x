@@ -96,12 +96,12 @@ def update_last_point(index, last_point):
     )
 
 
-def update_registed(address):
+def update_registed(index):
     excel = Excel(file_path())
     excel.updateItem(
-        "address",
-        address,
-        {"url": None, "registed": "1"},
+        "index",
+        index,
+        {"invite_code": None, "registed": "1"},
     )
 
 

@@ -194,7 +194,7 @@ def _register(data):
     matr1x = Matr1x(pk)
     matr1x.register(page, invite_code)
 
-    update_registed(matr1x.eth_address)
+    update_registed(index)
 
 
 @cli.command("ri")
