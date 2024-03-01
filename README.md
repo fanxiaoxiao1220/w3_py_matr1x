@@ -30,7 +30,20 @@ matr1x 自动化任务系统, 目前只支持基于 adspower 指纹浏览器进�
   `pk` 钱包私钥，需要通过 aes 加密存储
   `pwd` 小狐狸钱包密码
 
-### 2. 执行- 单个执行
+### 2. 数据生成+配置
+
+批量生成 10 条数据
+
+`python3 helper.py gd -c 10`
+
+还需手工配置字段：
+`invite_code`： 邀请码， 首次需向其他人获取，激活第二天后，可以执行 `python index.py rc` 后在 `codes.txt` 获取
+`tw_token`： twitter 登录 token 可在 https://hstock.org/ru/category/twitter 购买
+`proxy`：代理， 可选，配置了会更安全，目前只支持不带授权的代理
+
+字段配置完成后，就可以下一步了。
+
+### 3. 执行- 单个执行
 
 `python index.py ri -i index`
 这里的`index`就是 `matr1x/data.xlsx`表格中`index`
@@ -46,7 +59,7 @@ matr1x 自动化任务系统, 目前只支持基于 adspower 指纹浏览器进�
       * 批量查询余额，低于0.5马蹄会告警
       `python index.py b`
 
-- 一次性获取邀请码
+- 获取所有浏览器中的邀请码
   `python index.py rc`
   获取后写入`codes.txt`文件中
 
