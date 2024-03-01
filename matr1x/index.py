@@ -257,7 +257,11 @@ class Matr1x:
         )
         for ele in eles:
             title = ele.parent(2).ele(".taskContent").child(1).text
-            if "Open Case" in title or "Refer Friends" in title:
+            if (
+                "Open Case" in title
+                or "Refer Friends" in title
+                or "Join MATR1X" in title
+            ):
                 continue
 
             ele.click()

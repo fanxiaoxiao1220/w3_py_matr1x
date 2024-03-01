@@ -7,6 +7,13 @@ import time
 Account.enable_unaudited_hdwallet_features()
 
 
+def get_pk_from_mnemo(mnemo):
+    wallet = Account.from_mnemonic(mnemo)
+    print(wallet.address)
+    print(wallet.key.hex())
+    return wallet.key.hex()
+
+
 def generate_accounts(_num_accounts):
     _accounts = []
     mnemo = Mnemonic("english")
