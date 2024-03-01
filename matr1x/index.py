@@ -176,13 +176,15 @@ class Matr1x:
             mm.connect()
 
         # 激活
-        last_tab.ele("x://span[text()=' Activate ']/parent::button", timeout=5).click()
-        last_tab.ele("x://span[text()=' CHECK ']/parent::button", timeout=5).click()
-        last_tab.ele("x://span[text()=' CLAIM ']/parent::button").click()
+        ele = last_tab.ele("x://span[text()=' Activate ']/parent::button", timeout=5)
+        if ele:
+            ele.click()
+            last_tab.ele("x://span[text()=' CHECK ']/parent::button", timeout=5).click()
+            last_tab.ele("x://span[text()=' CLAIM ']/parent::button").click()
 
-        page.wait.new_tab()
-        time.sleep(3)
-        mm.approve()
+            page.wait.new_tab()
+            time.sleep(3)
+            mm.approve()
 
         # 检查是否激活完成
         while True:
