@@ -1,7 +1,7 @@
 import os
 from loguru import logger
 from base.utils.excel import Excel
-from base.utils.aes import aes_decrypt
+from base.utils.aes import aes_decrypt, aes_encrypt
 from config import AES_KEY
 from utils.hhtime import get_current_date
 
@@ -99,12 +99,20 @@ def update_claimed_date(index):
 
 
 def insert_data(eth_address, w, pk, pwd, ua):
+    w = aes_encrypt(w, AES_KEY)
+    pk = aes_encrypt(pk, AES_KEY)
+    pwd = aes_encrypt(pwd, AES_KEY)
 
-    logger.info(eth_address)
-    logger.info(w)
-    logger.info(pk)
-    logger.info(pwd)
+    excel = Excel(file_path())
+    index = excel.get_row_count() + 1
 
-    # data = {"address": eth_address, "pk": pk, "pwd": pwd}
-    # excel = Excel(file_path())
-    # excel.appendExcel(data)
+    data = {
+        "index": index,
+        "address": eth_address,
+        "pk": pk,
+        "w": w,
+        "pwd": pwd,
+        "ua": ua,
+    }
+
+    excel.appendExcel(data)

@@ -14,7 +14,6 @@ def generate_accounts(_num_accounts):
     for i in range(_num_accounts):
         mnemonic = mnemo.generate(strength=128)
         wallet = Account.from_mnemonic(mnemonic)
-        print(i, wallet.address)
         _accounts.append(
             (
                 wallet.key.hex(),

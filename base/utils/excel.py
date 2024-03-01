@@ -33,14 +33,25 @@ class Excel:
 
     # 追加数据
     def appendExcel(self, data):
-        df = pd.read_excel(self.excel_name)
-        new_data = pd.DataFrame(data)
+        try:
+            # 读取 Excel 文件
+            df = pd.read_excel(self.excel_name)
 
-        # 将新数据添加到原数据框中
-        new_df = pd.concat([df, new_data], ignore_index=True)
+            # 获取总行数
+            row_count = df.shape[0]
 
-        # 保存数据到 Excel 文件中
-        new_df.to_excel(self.excel_name, index=False)
+            # 获取新数据的索引
+            new_index = row_count + 1
+
+            # 将新数据添加到原数据框中
+            new_df = pd.DataFrame(data, index=[new_index])
+            df = pd.concat([df, new_df], ignore_index=True)
+
+            # 保存数据到 Excel 文件中
+            with pd.ExcelWriter(self.excel_name) as writer:
+                df.to_excel(writer, index=False)
+        except Exception as e:
+            print("追加数据到Excel文件时出现错误:", str(e))
 
     def getItem(self, field_name, field_value):
         try:
@@ -109,10 +120,9 @@ class Excel:
             # 读取 Excel 文件
             df = pd.read_excel(self.excel_name)
 
-            # 去除左右两边的空格
-            df = df.map(lambda x: x.strip() if isinstance(x, str) else x)
+            # 去除左右两边的空格，对每一列应用 strip
+            df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
 
-            # 转换为 JSON 格式
             # 转换为 JSON 格式
             json_data = df.to_json(orient="records")
 
@@ -124,6 +134,16 @@ class Excel:
         except Exception as e:
             print("获取所有数据并以 JSON 格式返回时出现错误:", str(e))
             return []
+
+    def get_row_count(self):
+        try:
+            # 读取 Excel 文件
+            df = pd.read_excel(self.excel_name)
+            # 返回行数
+            return len(df)
+        except Exception as e:
+            print("获取行数时出现错误:", str(e))
+            return 0
 
     # 加密方法
     def encryptPassword(self, password):

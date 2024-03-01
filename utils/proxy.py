@@ -1,3 +1,4 @@
+import os
 import requests
 import asyncio
 import aiohttp
@@ -86,20 +87,30 @@ def format_proxy(proxy_str):
     return formatted_proxy
 
 
-proxies = []
-
-
 def random_choice_proxy():
-    global proxies
+    # proxies
+    filename = f"config/proxies.csv"
+
+    proxies = []
+    with open(filename, "r") as file:
+        for proxy in file:
+            proxies.append(proxy)
+    if len(proxies) == 0:
+        logger.warning("还未配置IP, 可执行命令: python helper.py cip 更新 ")
+        return None
+
+    return random.choice(proxies)
+
+
+def check_available_proxies():
     event_loop = asyncio.get_event_loop()
     coro = get_proxies()
-    if len(proxies) == 0:
-        proxies = event_loop.run_until_complete(coro)
-
-    proxy = random.choice(proxies)
-    proxies.remove(proxy)
-
-    return proxy
+    proxies = event_loop.run_until_complete(coro)
+    os.makedirs("config", exist_ok=True)
+    filename = f"config/proxies.csv"
+    with open(filename, "w") as f:
+        for proxy in proxies:
+            f.write(f"{proxy}\n")
 
 
 # 返回可用的代理列表
