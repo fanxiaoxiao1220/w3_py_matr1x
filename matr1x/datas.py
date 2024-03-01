@@ -20,9 +20,14 @@ def load_data_list():
     data_list = get_infos_from_excel()
     for data in data_list:
         pk = data.get("pk")
+        w = data.get("w")
         if pk:
-            newpk = aes_decrypt(pk, AES_KEY)
-            data["pk"] = newpk
+            _pk = aes_decrypt(pk, AES_KEY)
+            data["pk"] = _pk
+
+        if w:
+            _w = aes_decrypt(w, AES_KEY)
+            data["w"] = _w
     return data_list
     # return [data_list[41]]
 
