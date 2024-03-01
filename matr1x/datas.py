@@ -56,6 +56,18 @@ def update_key(index, key_count=0):
     )
 
 
+def update_imported(index):
+    excel = Excel(file_path())
+    timestamp = get_current_date()
+    excel.updateItem(
+        "index",
+        index,
+        {
+            "imported": 1,
+        },
+    )
+
+
 def update_point(index, point):
     excel = Excel(file_path())
     logger.info(f"{point}积分写入 {index} ")

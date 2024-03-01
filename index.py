@@ -6,7 +6,7 @@ from retry import retry
 from config.eth_wallet import *
 from base.utils.dp import get_page_by_adspwer_id, get_page_with_browser_name
 from base.metamask import Metamask
-
+from base.twitter import Twitter
 
 from matr1x.index import Matr1x
 from utils.hhtime import get_current_date
@@ -17,6 +17,7 @@ from matr1x.datas import (
     update_last_point,
     update_point,
     load_data_list,
+    update_imported,
 )
 
 
@@ -119,6 +120,19 @@ def _get_page_with_browser_name(index):
     return page
 
 
+def _import_data_2_browser(w, pwd, tw_token, page, index):
+    Metamask(page).wallet_setup(w, pwd)
+
+    # twitter导入
+    if not tw_token:
+        logger.warning(f"{index} 还未配置twitter token...")
+        return page
+    Twitter(page).login_by_token(tw_token)
+
+    # 写入excel
+    update_imported(index)
+
+
 # 获取page，并且通过小狐狸钱包登录
 def _get_page(index, need_login=False):
 
@@ -137,8 +151,16 @@ def _get_page(index, need_login=False):
     page.close_other_tabs()
 
     # 导入小狐狸钱包
-    if need_login:
-        pwd = wallet.get("pwd")
+    if not need_login:
+        return page
+
+    imported = wallet.get("imported")
+    pwd = wallet.get("pwd")
+    w = wallet.get("w")
+    if not imported:
+        tw_token = wallet.get("tw_token")
+        _import_data_2_browser(w, pwd, tw_token, page, index)
+    else:
         Metamask(page).wallet_login(pwd)
 
     return page
@@ -193,7 +215,7 @@ def _run_item(data):
         matr1x = Matr1x(pk)
 
         # ads_id 为空跳过
-        # ads_id = data.get("ads_id")
+        ads_id = data.get("ads_id")
         # if not ads_id:
         #     logger.warning(f"{index} 获取ads_id为空, 跳过...")
         #     return False
@@ -284,8 +306,11 @@ def random_run(count):
         index = data.get("index")
         print(f"{index} 已经添加到执行队列...")
 
-    for result in async_result:
-        result.get()
+    try:
+        for result in async_result:
+            result.get()
+    except Exception as e:
+        logger.info(e)
 
     # 关闭进程池并等待所有进程完成
     pool.close()

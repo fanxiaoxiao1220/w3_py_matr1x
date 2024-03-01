@@ -199,8 +199,9 @@ class Matr1x:
         last_tab = page.get_tab(0)
         while True:
             last_tab.get("https://matr1x.io/max-event")
+            logger.info("已经打开的钥匙 {key_count}")
             count = self.get_unpack_key_count(page)
-            if count == key_count:
+            if count >= key_count:
                 logger.info(f"{self.eth_address} 出现钥匙, 继续执行任务...")
                 break
 
