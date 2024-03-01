@@ -180,7 +180,7 @@ def claim(index, count):
 
 
 def _register(data):
-    url = data.get("url")
+    invite_code = data.get("invite_code")
     pk = data.get("pk")
     index = data.get("index")
 
@@ -192,7 +192,7 @@ def _register(data):
         mm.add_network("Polygon Mainnet")
 
     matr1x = Matr1x(pk)
-    matr1x.register(page, url)
+    matr1x.register(page, invite_code)
 
     update_registed(matr1x.eth_address)
 
@@ -215,7 +215,7 @@ def _run_item(data):
         matr1x = Matr1x(pk)
 
         # ads_id 为空跳过
-        ads_id = data.get("ads_id")
+        # ads_id = data.get("ads_id")
         # if not ads_id:
         #     logger.warning(f"{index} 获取ads_id为空, 跳过...")
         #     return False

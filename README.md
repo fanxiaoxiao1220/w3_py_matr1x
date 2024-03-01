@@ -30,7 +30,7 @@ matr1x 自动化任务系统
 
 批量生成 10 条数据
 
-`python3 helper.py gd -c 10`
+`python helper.py gd -c 10`
 
 还需手工配置字段：
 `invite_code`： 邀请码， 首次需向其他人获取，激活第二天后，执行 `python index.py rc` 后在 `codes.txt` 获取
