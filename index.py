@@ -179,12 +179,11 @@ def claim(index, count):
     matr1x.claim_key(count, False)
 
 
-def _register(data):
+def _register(data, page):
     invite_code = data.get("invite_code")
     pk = data.get("pk")
     index = data.get("index")
 
-    page = _get_page(index, True)
     mm = Metamask(page)
     network = mm.get_current_network()
 
@@ -236,16 +235,16 @@ def _run_item(data):
 
         # 未注册先注册
         registed = data.get("registed")
+        page = _get_page(index, True)
         if not registed:
             logger.warning(f"{index} 还未注册, 进行注册...")
-            _register(data)
+            _register(data, page)
 
         address = data.get("address")
         logger.info(f"准备执行【{index}】号浏览器, 钱包地址：【{address}】")
 
         # 通过合约进行claim
         result = matr1x.claim_key()
-        page = _get_page(index, True)
         # 如果claim完成就循环等待钥匙出现
         if result:
             matr1x.wait_key_visible(page, 3)

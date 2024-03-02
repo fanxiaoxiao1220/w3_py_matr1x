@@ -113,7 +113,7 @@ class Metamask:
         # logger.info(f"准备访问{METAMASK_EXTENSION_PATH}")
         self.page.get(METAMASK_EXTENSION_PATH)
 
-        ele = self.page.ele(".whats-new-popup__notifications", timeout=3)
+        ele = self.page.ele(".whats-new-popup__notifications", timeout=6)
         if ele:
             self.page.ele('x://button[@data-testid="popover-close"]', timeout=3).click()
 

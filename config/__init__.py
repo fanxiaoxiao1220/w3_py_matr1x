@@ -18,9 +18,9 @@ POLYGON_RPC = environ.get("POLYGON_RPC")
 # 小狐狸钱包附件地址
 METAMASK_PATH = environ.get("METAMASK_PATH")
 # 小狐狸钱包访问地址
-# METAMASK_EXTENSION_PATH = environ.get("METAMASK_EXTENSION_PATH")
-# nkbihfbeogaeaoehlefnkodbefgpgknn
-# ainefeeenhhkmnfoccokjhnmiibapdbp
-METAMASK_EXTENSION_PATH = (
-    "chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn/home.html"
-)
+METAMASK_EXTENSION_PATH = environ.get("METAMASK_EXTENSION_PATH")
+# # nkbihfbeogaeaoehlefnkodbefgpgknn
+# # ainefeeenhhkmnfoccokjhnmiibapdbp
+# METAMASK_EXTENSION_PATH = (
+#     "chrome-extension://ainefeeenhhkmnfoccokjhnmiibapdbp/home.html"
+# )
