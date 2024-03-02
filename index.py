@@ -127,10 +127,17 @@ def _import_data_2_browser(w, pwd, tw_token, page, index):
     if not tw_token:
         logger.warning(f"{index} 还未配置twitter token...")
         return page
-    Twitter(page).login_by_token(tw_token)
 
-    # 写入excel
-    update_imported(index)
+    twitter = Twitter(page)
+    twitter.login_by_token(tw_token)
+    token = twitter.get_token()
+
+    if tw_token == token:
+        logger.success(f"[{index}] Twitter token登录成功!")
+        # 写入excel
+        update_imported(index)
+    else:
+        logger.error(f"[{index}] Twitter token登录失败")
 
 
 # 获取page，并且通过小狐狸钱包登录
