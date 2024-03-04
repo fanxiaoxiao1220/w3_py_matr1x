@@ -284,8 +284,8 @@ def _run_item(data):
             page.close()
 
 
-# @cli.command("r")
-# @click.option("-c", "--count", default=4, type=int, help="进程数")
+@cli.command("r")
+@click.option("-c", "--count", default=4, type=int, help="进程数")
 def random_run(count):
 
     import multiprocessing
