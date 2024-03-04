@@ -19,8 +19,5 @@ POLYGON_RPC = environ.get("POLYGON_RPC")
 METAMASK_PATH = environ.get("METAMASK_PATH")
 # 小狐狸钱包访问地址
 METAMASK_EXTENSION_PATH = environ.get("METAMASK_EXTENSION_PATH")
-# # nkbihfbeogaeaoehlefnkodbefgpgknn
-# # ainefeeenhhkmnfoccokjhnmiibapdbp
-# METAMASK_EXTENSION_PATH = (
-#     "chrome-extension://ainefeeenhhkmnfoccokjhnmiibapdbp/home.html"
-# )
+# 等待任务是否完成
+SHOULD_WAIT_FOR_TASK_COMPLETION = environ.get("SHOULD_WAIT_FOR_TASK_COMPLETION")

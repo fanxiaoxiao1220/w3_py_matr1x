@@ -1,15 +1,15 @@
-import requests, random, time
+import random, time
 import json
 from web3 import Web3, HTTPProvider
 from eth_account import Account
 from retry import retry
 from loguru import logger
 from config.abi_config import nft_abi
-from config import POLYGON_RPC
+from config import POLYGON_RPC, SHOULD_WAIT_FOR_TASK_COMPLETION
 from utils.hhtime import is_same_day
 from utils.polygon import Polygon
 from base.metamask import Metamask
-from matr1x.datas import update_point, update_registed
+
 
 rpc = POLYGON_RPC
 contrac_address = "0x0f3284bFEbc5f55B849c8CF792D39cC0f729e0BC"
@@ -59,29 +59,6 @@ class Matr1x:
             logger.warning("获取point异常")
             point = "-1"
         return point
-
-    # 链接twitter
-    def _auth_x(self, page):
-        page.listen.start("https://api.matr1x.io/matr1x-points/task/authTwitter")
-        last_tab = page.get_tab(0)
-
-        page.wait.ele_loaded("@data-testid=OAuth_Consent_Button")
-        last_tab.ele("@data-testid=OAuth_Consent_Button").click()
-
-        for packet in page.listen.steps():
-            response = packet.response
-            body = json.loads(response.raw_body)
-            code = body.get("code")
-            if code != 0:
-                logger.warning(response)
-                self.connect_x = False
-            else:
-                logger.success("x 授权成功")
-                self.connect_x = True
-            break
-
-        time.sleep(3)
-        return self.connect_x
 
     def _open_key(self, last_tab, index):
         # 打开盒子
@@ -228,11 +205,10 @@ class Matr1x:
     def get_unpack_key_count(self, page):
         # 查询是否还有钥匙
         last_tab = page.get_tab(0)
-        key = last_tab.ele("Key Count:").next()
-        key_count = int(key.text)
-        if key_count > 0:
-            logger.info(f"[{self.eth_address}] 待打开钥匙 {key.text}个")
-
+        time.sleep(3)
+        ele = last_tab.ele("Key Count:").next()
+        key_count = int(ele.text)
+        logger.info(f"[{self.eth_address}] 待打开钥匙 {key_count}个")
         return key_count
 
     # 获取钥匙数量
@@ -246,12 +222,73 @@ class Matr1x:
 
         return key_count
 
+    def _get_connect_x_button(self, page):
+        last_tab = page.get_tab(0)
+        eles = last_tab.eles(
+            "x://div[@class='pointsTaskListWarp']//button[@class='el-button btn el-button--default']"
+        )
+        for ele in eles:
+            title = ele.parent(2).ele(".taskContent").child(1).text
+            if (
+                "Open Case" in title
+                or "Refer Friends" in title
+                or "Join MATR1X" in title
+            ):
+                continue
+
+            connect_x_ele = last_tab.ele(
+                "x://span[text()=' Connect Twitter ']/parent::button", timeout=3
+            )
+            return connect_x_ele
+
+    # 关联x
+    @retry(ConnectXException, tries=5, delay=3)
+    def connectx(self, page, index):
+
+        last_tab = page.get_tab(0)
+        last_tab.get("https://matr1x.io/max-event")
+
+        # 判断是否要链接twitter
+        if self.connect_x:
+            logger.success(f"{index} 已经关联过twitter, 无需重复关联")
+            return
+
+        connect_x_ele = self._get_connect_x_button(page)
+        if not connect_x_ele:
+            self.connect_x = True
+            logger.success(f"{index} 已经关联过twitter, 无需重复关联")
+            return
+
+        logger.info(f"{index} 准备关联twitter账号")
+        self.connect_x = False
+        page.listen.start("https://api.matr1x.io/matr1x-points/task/authTwitter")
+        connect_x_ele.click()
+
+        page.wait.ele_loaded("@data-testid=OAuth_Consent_Button")
+        last_tab.ele("@data-testid=OAuth_Consent_Button").click()
+
+        for packet in page.listen.steps():
+            response = packet.response
+            body = json.loads(response.raw_body)
+            code = body.get("code")
+            if code != 0:
+                logger.warning(response)
+                self.connect_x = False
+                raise ConnectXException()
+            else:
+                logger.success("x 授权成功")
+                self.connect_x = True
+            break
+
     # 完成任务
-    @retry(ConnectXException, tries=5, delay=1)
+    @retry(tries=5, delay=1)
     def task(self, page, index):
         # logger.info(f"{index} 准备开始执行任务...")
         last_tab = page.get_tab(0)
         last_tab.get("https://matr1x.io/max-event")
+
+        self.connectx(page, index)
+
         self.task_count = 0
         # 查找未完成的任务，然后去执行
         eles = last_tab.eles(
@@ -281,22 +318,6 @@ class Matr1x:
                 last_tab.ele("x://div[@class='close']").click()
                 continue
 
-            # 判断是否需要链接twitter
-            if not self.connect_x:
-                connect_x = last_tab.ele(
-                    "x://span[text()=' Connect Twitter ']/parent::button", timeout=3
-                )
-                if not connect_x:
-                    self.connect_x = True
-                    logger.success(f"{self.eth_address}已经关联过twitter, 无需重复关联")
-                else:
-                    self.connect_x = False
-                    connect_x.click()
-                    # 关联twitter
-                    result = self._auth_x(page)
-                    if not result:
-                        raise ConnectXException()
-
             try:
                 last_tab.ele(
                     "x://span[text()=' VERIFY ']/parent::button", timeout=3
@@ -305,8 +326,8 @@ class Matr1x:
                 time.sleep(3)
             except Exception as e:
                 logger.error(e)
-
-        if self.task_count > 0:
+        logger.info(SHOULD_WAIT_FOR_TASK_COMPLETION)
+        if self.task_count > 0 and SHOULD_WAIT_FOR_TASK_COMPLETION:
             time.sleep(120)
 
         logger.success(f"{index} 所有任务执行完成...")

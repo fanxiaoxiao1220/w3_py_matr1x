@@ -108,28 +108,31 @@ class Metamask:
         # 输入密码
         self.wallet_login(password)
 
+    @retry(tries=3, delay=3)
     def wallet_login(self, password: str):
+
         # 开始访问插件
-        # logger.info(f"准备访问{METAMASK_EXTENSION_PATH}")
         self.page.get(METAMASK_EXTENSION_PATH)
 
-        ele = self.page.ele(".whats-new-popup__notifications", timeout=6)
-        if ele:
-            self.page.ele('x://button[@data-testid="popover-close"]', timeout=3).click()
-
-        # 查找导入token按钮
-        ele = self.page.ele('x://button[@data-testid="import-token-button"]', timeout=3)
-        if ele:
-            logger.info("已经导入过数据, 并且已经登录完成")
-            return
-
         # 输入密码
-        ele = self.page.ele("#password", timeout=3)
+        ele = self.page.ele("#password")
         if not ele:
             logger.info("已经登录过, 无需重复登录")
             return
+
         ele.input(password)
         self.page.ele('x://button[@data-testid="unlock-submit"]').click()
+
+        ele = self.page.ele(".whats-new-popup__notifications", timeout=3)
+        if ele:
+            self.page.ele('x://button[@data-testid="popover-close"]', timeout=3).click()
+
+        # 检测登录是否完成
+        ele = self.page.ele("Tokens", timeout=3)
+        if ele:
+            logger.info("校验登录成功")
+        else:
+            raise Exception("校验登录失败，重新登录...")
 
     def try_add_network(self):
         logger.info("正在准备添加网络...")

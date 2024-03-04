@@ -220,12 +220,6 @@ def _run_item(data):
     try:
         matr1x = Matr1x(pk)
 
-        # ads_id 为空跳过
-        # ads_id = data.get("ads_id")
-        # if not ads_id:
-        #     logger.warning(f"{index} 获取ads_id为空, 跳过...")
-        #     return False
-
         # 当天执行过不再执行
         claimed_date = data.get("claimed_date")
         current_date = get_current_date()
@@ -290,8 +284,8 @@ def _run_item(data):
             page.close()
 
 
-@cli.command("r")
-@click.option("-c", "--count", default=4, type=int, help="进程数")
+# @cli.command("r")
+# @click.option("-c", "--count", default=4, type=int, help="进程数")
 def random_run(count):
 
     import multiprocessing
@@ -350,6 +344,7 @@ if __name__ == "__main__":
     # logger.info(get_pks())
     # get_uni_codes()
     # banlances()
+    # random_run(1)
 
-    # data = find_data_by_index(1000)
+    # data = find_data_by_index(2)
     # _run_item(data)
