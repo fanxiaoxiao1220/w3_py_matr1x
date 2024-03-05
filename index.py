@@ -340,11 +340,11 @@ def get_uni_codes():
 
 
 if __name__ == "__main__":
-    # cli()
+    cli()
     # logger.info(get_pks())
     # get_uni_codes()
     # banlances()
     # random_run(1)
 
-    data = find_data_by_index(5)
-    _run_item(data)
+    # data = find_data_by_index(5)
+    # _run_item(data)
