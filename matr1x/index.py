@@ -31,24 +31,25 @@ class Matr1x:
         self.connect_x = False
         self.task_count = 0  # 验证任务数
 
-    @retry(tries=3, delay=1)
     def _claim_key_with_contract(self):
-        txn = self.contract.functions.claimKey().build_transaction(
-            {
-                "gas": random.randint(110000, 120000),
-                "gasPrice": int(self.w3.eth.gas_price * 1.01),
-                "nonce": self.w3.eth.get_transaction_count(self.eth_address),
-            }
-        )
+        try:
+            txn = self.contract.functions.claimKey().build_transaction(
+                {
+                    "gas": random.randint(110000, 120000),
+                    "gasPrice": int(self.w3.eth.gas_price * 1.1),
+                    "nonce": self.w3.eth.get_transaction_count(self.eth_address),
+                }
+            )
 
-        signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.pk)
-        order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
-        if transaction_receipt.status == 1:
-            logger.success(f"{self.eth_address} claimKey成功")
-            return True
+            signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.pk)
+            order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+            transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
+            if transaction_receipt.status == 1:
+                logger.success(f"{self.eth_address} claimKey成功")
+                return True
+        except Exception as e:
+            logger.error(f"{self.eth_address} claimKey失败! {e}")
 
-        logger.error(f"{self.eth_address} claimKey失败!")
         return False
 
     def get_point(self, tab):
@@ -125,8 +126,12 @@ class Matr1x:
 
     # 获取钱包余额
     def get_balance(self):
-        _balance = self.w3.eth.get_balance(self.eth_address)
-        balance = self.w3.from_wei(_balance, "ether")
+        balance = 0
+        try:
+            _balance = self.w3.eth.get_balance(self.eth_address)
+            balance = self.w3.from_wei(_balance, "ether")
+        except Exception as e:
+            logger.error(e)
         return balance
 
     def register(self, page, invite_code):
@@ -326,8 +331,8 @@ class Matr1x:
                 time.sleep(3)
             except Exception as e:
                 logger.error(e)
-        logger.info(SHOULD_WAIT_FOR_TASK_COMPLETION)
-        if self.task_count > 0 and SHOULD_WAIT_FOR_TASK_COMPLETION:
+
+        if self.task_count > 0 and SHOULD_WAIT_FOR_TASK_COMPLETION == 1:
             time.sleep(120)
 
         logger.success(f"{index} 所有任务执行完成...")
