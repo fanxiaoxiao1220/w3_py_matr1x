@@ -29,6 +29,9 @@ def check_proxy(p):
         return False
 
 
+detected_proxies = {}
+
+
 async def check_proxy_async(session, proxy):
     try:
         proxy = format_proxy(proxy)
@@ -37,6 +40,11 @@ async def check_proxy_async(session, proxy):
         ) as response:
             result = await response.text()
             proxy_ip = result.strip()
+
+            # 检查代理IP是否已存在，如果不存在，则将代理和IP都存储起来
+            if proxy_ip not in detected_proxies:
+                detected_proxies[proxy_ip] = proxy
+
             if ("127.0.0.1" in proxy or "localhost" in proxy) and proxy_ip:
                 print(f"代理IP: {proxy},  实际IP:{proxy_ip}, 代理成功")
                 return 1
@@ -106,6 +114,8 @@ def check_available_proxies():
     event_loop = asyncio.get_event_loop()
     coro = get_proxies()
     proxies = event_loop.run_until_complete(coro)
+
+    logger.info(detected_proxies)
     os.makedirs("config", exist_ok=True)
     filename = f"config/proxies.csv"
     with open(filename, "w") as f:
@@ -116,7 +126,7 @@ def check_available_proxies():
 # 返回可用的代理列表
 async def get_proxies():
     proxies = []
-    for port in range(42000, 42145):
+    for port in range(42000, 42284):
         ip = f"127.0.0.1:{port}"
         proxies.append(ip)
 

@@ -128,7 +128,7 @@ class Metamask:
             self.page.ele('x://button[@data-testid="popover-close"]', timeout=3).click()
 
         # 检测登录是否完成
-        ele = self.page.ele("Tokens", timeout=3)
+        ele = self.page.ele(".eth-overview__balance", timeout=3)
         if ele:
             logger.info("校验登录成功")
         else:

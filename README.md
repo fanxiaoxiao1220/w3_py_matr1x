@@ -56,6 +56,10 @@ matr1x 自动化任务系统
       * 批量查询余额，低于0.5马蹄会告警
       `python index.py b`
 
+  这里可以先执行合约，然后再领取钥匙，可以提高效率
+  `python index.py rck`
+  `python index.py r`
+
 - 获取所有浏览器中的邀请码
   `python index.py rc`
   获取后写入`codes.txt`文件中

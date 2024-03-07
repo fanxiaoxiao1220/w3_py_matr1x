@@ -240,6 +240,7 @@ class Matr1x:
                 or "Join MATR1X" in title
             ):
                 continue
+            ele.click()
 
             connect_x_ele = last_tab.ele(
                 "x://span[text()=' Connect Twitter ']/parent::button", timeout=3
@@ -339,10 +340,11 @@ class Matr1x:
 
     def claim_key(self, count=3, is_check=True):
         balance = self.get_balance()
+        _count = 0
         eth_address = self.eth_address
         if balance == 0:
             logger.warning(f"{self.eth_address} 余额为0, 请检查...")
-            return False
+            return _count
 
         logger.info(f"[{eth_address}] 余额为 {balance} matic")
 
@@ -352,13 +354,15 @@ class Matr1x:
             logger.warning(
                 f"[{eth_address}] 今日已经claim超过3次, 无需重复执行, 本次跳过"
             )
-            return False
+            return _count
 
         for _ in range(count):
-            self._claim_key_with_contract()
+            result = self._claim_key_with_contract()
+            if result:
+                _count += 1
             time.sleep(random.randint(2, 5))
 
-        return True
+        return _count
 
     def get_referral_codes(self, page, index):
         last_tab = page.get_tab(0)

@@ -9,6 +9,7 @@ from base.metamask import Metamask
 from base.twitter import Twitter
 
 from matr1x.index import Matr1x
+from config import EXECUTE_TWITTER_TASK
 from utils.hhtime import get_current_date
 from matr1x.datas import (
     update_registed,
@@ -183,7 +184,8 @@ def claim(index, count):
     pk = data.get("pk")
 
     matr1x = Matr1x(pk)
-    matr1x.claim_key(count, False)
+    result = matr1x.claim_key(count, False)
+    logger.success(f"claimed 成功 {result} 个")
 
 
 def _register(data, page):
@@ -211,12 +213,14 @@ def run_item(index):
 
 
 def _run_item(data):
+
     index = data.get("index")
     pk = data.get("pk")
     page = None
     if not pk:
         logger.warning(f"{index} 获取pk为空, 跳过...")
         return False
+
     try:
         matr1x = Matr1x(pk)
 
@@ -247,28 +251,32 @@ def _run_item(data):
         # 通过合约进行claim
         result = matr1x.claim_key()
         # 如果claim完成就循环等待钥匙出现
-        if result:
-            matr1x.wait_key_visible(page, 3)
+        if result > 0:
+            matr1x.wait_key_visible(page, result)
 
         point = data.get("point") or 0
         logger.success(f"========== 【{index}】 claim之前的分数为:{point} ==========")
         update_last_point(index=index, last_point=point)
 
-        # 完成任务, 领取积分
-        for _ in range(3):
+        if int(EXECUTE_TWITTER_TASK):
             matr1x.claim(page, index)
-            try:
-                matr1x.task(page, index)
-            except Exception as e:
-                logger.error(e)
+        else:
+            # 完成任务, 领取积分
+            for _ in range(3):
+                matr1x.claim(page, index)
+                try:
+                    matr1x.task(page, index)
+                except Exception as e:
+                    logger.error(e)
 
-        key_count = matr1x.get_key_count(page)
-        if key_count > 0:
-            result = matr1x.claim_key(key_count, False)
-            # 如果claim完成就循环等待钥匙出现
-            if result:
-                matr1x.wait_key_visible(page, key_count)
-            matr1x.claim(page, index)
+            key_count = matr1x.get_key_count(page)
+            if key_count > 0:
+                result = matr1x.claim_key(key_count, False)
+                # 如果claim完成就循环等待钥匙出现
+                if result > 0:
+                    logger.success(f"claimed 成功 {result} 个")
+                    matr1x.wait_key_visible(page, result)
+                matr1x.claim(page, index)
 
         # 更新point
         point = matr1x.get_point(page.get_tab(0))
@@ -346,5 +354,5 @@ if __name__ == "__main__":
     # banlances()
     # random_run(1)
 
-    # data = find_data_by_index(5)
+    # data = find_data_by_index(2)
     # _run_item(data)
