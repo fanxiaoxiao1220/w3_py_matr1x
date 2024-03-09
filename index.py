@@ -78,9 +78,10 @@ def random_get_referral_codes(index):
 def random_get_referral_codes():
     all_codes = []
     datas = load_data_list()
-    while datas:
-        data = random.choice(datas)
-        datas.remove(data)
+
+    for data in datas:
+        # data = random.choice(datas)
+        # datas.remove(data)
         try:
             codes = _get_referral_codes(data)
             _write_code2_txt(codes)

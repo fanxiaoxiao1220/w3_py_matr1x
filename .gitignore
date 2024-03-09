@@ -251,7 +251,7 @@ Temporary Items
 **/*.xlsx
 **/*.csv
 .vscode
-config.json
+**/config.json
 
 __pycache__
 .venv
