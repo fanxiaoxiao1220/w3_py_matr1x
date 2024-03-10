@@ -36,7 +36,7 @@ class Matr1x:
             txn = self.contract.functions.claimKey().build_transaction(
                 {
                     "gas": random.randint(110000, 120000),
-                    "gasPrice": int(self.w3.eth.gas_price * 1.1),
+                    "gasPrice": int(self.w3.eth.gas_price * 1.01),
                     "nonce": self.w3.eth.get_transaction_count(self.eth_address),
                 }
             )

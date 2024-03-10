@@ -97,26 +97,5 @@ def get_amount(start, end):
     return amount
 
 
-def withdraw():
-    address = [
-        "0x821315b1C06Ae098dB31Ff3CD5F6AFD5452f144F",
-        "0x91b5629C4E66304AB454efD21879276999b0E11D",
-    ]
-
-    # token、network 可以通过 self.funding_api.get_currencies 获取查看
-    # token 一般为ETH，BTC等
-
-    token = "MATIC"
-    network = "Polygon"
-    start = 1.1
-    end = 2.5
-    for addr in address:
-        amount = get_amount(start, end)
-        logger.info(amount)
-        okx = OKX()
-        okx.withdraw(address=addr, token=token, network=network, amount=amount)
-        time.sleep(random.randint(30, 3600))
-
-
 if __name__ == "__main__":
-    withdraw()
+    pass
