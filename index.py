@@ -290,7 +290,7 @@ def _run_item(data):
         logger.error(e)
     finally:
         if page:
-            page.close()
+            page.quit()
 
 
 @cli.command("r")
