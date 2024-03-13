@@ -2,7 +2,7 @@ import os
 from DrissionPage import ChromiumPage, ChromiumOptions
 from fake_useragent import UserAgent
 from loguru import logger
-
+import socket
 
 from base.utils.adspower import *
 from base.utils.bit import get_debug_address_with_bite
@@ -78,9 +78,16 @@ def _get_system_browser_options(name, data):
     if not os.path.exists(user_data_path):
         os.makedirs(user_data_path)
 
-    co.set_paths(user_data_path=user_data_path)
+    co.set_paths(user_data_path=user_data_path, local_port=_find_free_port())
     if METAMASK_PATH:
         _path = rf"{METAMASK_PATH}"
         co.add_extension(_path)
 
     return co
+
+
+def _find_free_port() -> int:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("", 0))  # 绑定到端口0
+        print(s.getsockname())
+        return s.getsockname()[1]  # 返回被自动选择的端口号
